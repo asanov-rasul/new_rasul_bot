@@ -6,31 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Карта достопримечательностей Туркменистана</title>
 
-  <!-- Leaflet CSS -->
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    /* ───────────────────────────────────────────
-       VARIABLES & RESET
-    ─────────────────────────────────────────── */
     :root {
-      --bg:        #0b1120;
-      --panel:     #111827;
-      --panel2:    #1a2438;
-      --border:    #1e3a5f;
-      --accent:    #3b82f6;
-      --accent2:   #60a5fa;
-      --red:       #e63939;
-      --gold:      #f59e0b;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --selected:  #1d4ed8;
-      --panel-w:   280px;
+      --bg:       #0b1120;
+      --panel:    #111827;
+      --panel2:   #1a2438;
+      --border:   #1e3a5f;
+      --accent:   #3b82f6;
+      --accent2:  #60a5fa;
+      --red:      #e63939;
+      --gold:     #f59e0b;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --selected: #1d4ed8;
+      --panel-w:  280px;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -43,9 +36,7 @@
       overflow: hidden;
     }
 
-    /* ───────────────────────────────────────────
-       HEADER
-    ─────────────────────────────────────────── */
+    /* ── HEADER ── */
     header {
       background: linear-gradient(135deg, #0d1b2e 0%, #0f2645 50%, #0d1b2e 100%);
       border-bottom: 1px solid var(--border);
@@ -57,295 +48,116 @@
       position: relative;
       overflow: hidden;
     }
-
-    /* decorative stars */
     header::before {
       content: '★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★';
       position: absolute;
       top: 4px; left: 50%;
       transform: translateX(-50%);
-      font-size: 9px;
-      color: var(--gold);
-      opacity: 0.35;
-      letter-spacing: 6px;
-      white-space: nowrap;
+      font-size: 9px; color: var(--gold); opacity: 0.35;
+      letter-spacing: 6px; white-space: nowrap;
     }
+    .header-text h1 { font-size: 1.2rem; font-weight: normal; letter-spacing: 0.06em; color: #f1f5f9; }
+    .header-text p  { font-size: 0.75rem; color: var(--gold); letter-spacing: 0.12em; margin-top: 2px; font-style: italic; }
+    .header-badge   { background: var(--border); border: 1px solid var(--accent); border-radius: 6px; padding: 6px 14px; font-size: 0.72rem; color: var(--accent2); letter-spacing: 0.08em; }
 
-    .header-text h1 {
-      font-size: 1.2rem;
-      font-weight: normal;
-      letter-spacing: 0.06em;
-      color: #f1f5f9;
-    }
+    /* ── LAYOUT ── */
+    .main { display: flex; flex: 1; overflow: hidden; }
 
-    .header-text p {
-      font-size: 0.75rem;
-      color: var(--gold);
-      letter-spacing: 0.12em;
-      margin-top: 2px;
-      font-style: italic;
-    }
-
-    .header-badge {
-      background: var(--border);
-      border: 1px solid var(--accent);
-      border-radius: 6px;
-      padding: 6px 14px;
-      font-size: 0.72rem;
-      color: var(--accent2);
-      letter-spacing: 0.08em;
-    }
-
-    /* ───────────────────────────────────────────
-       MAIN LAYOUT
-    ─────────────────────────────────────────── */
-    .main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    /* ───────────────────────────────────────────
-       SIDEBAR
-    ─────────────────────────────────────────── */
+    /* ── SIDEBAR ── */
     #sidebar {
-      width: var(--panel-w);
-      min-width: var(--panel-w);
+      width: var(--panel-w); min-width: var(--panel-w);
       background: var(--panel);
       border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      flex-shrink: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden; flex-shrink: 0;
     }
+    .sidebar-section { padding: 14px 14px 10px; border-bottom: 1px solid var(--border); }
+    .sidebar-label   { font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 
-    .sidebar-section {
-      padding: 14px 14px 10px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .sidebar-label {
-      font-size: 0.62rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    /* list of all sights */
-    #sight-list {
-      list-style: none;
-      overflow-y: auto;
-      flex: 0 0 auto;
-      max-height: 260px;
-    }
-
+    #sight-list { list-style: none; overflow-y: auto; flex: 0 0 auto; max-height: 260px; }
     #sight-list li {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 14px;
-      cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; cursor: pointer;
       border-left: 3px solid transparent;
       transition: background 0.15s, border-color 0.15s;
-      font-size: 0.82rem;
-      line-height: 1.3;
+      font-size: 0.82rem; line-height: 1.3;
     }
+    #sight-list li:hover  { background: var(--panel2); border-left-color: var(--accent); }
+    #sight-list li.active { background: #162035;       border-left-color: var(--accent); }
+    .sight-emoji { font-size: 1rem; flex-shrink: 0; line-height: 1; }
+    .sight-num   { width:22px;height:22px;border-radius:50%;background:var(--selected);color:#fff;font-size:0.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:monospace; }
+    .sight-dot   { width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background 0.15s; }
+    #sight-list li.active .sight-dot { background: var(--accent); }
 
-    #sight-list li:hover {
-      background: var(--panel2);
-      border-left-color: var(--accent);
-    }
-
-    #sight-list li.active {
-      background: #162035;
-      border-left-color: var(--accent);
-    }
-
-    .sight-num {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--selected);
-      color: #fff;
-      font-size: 0.7rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-family: monospace;
-    }
-
-    .sight-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--muted);
-      flex-shrink: 0;
-      transition: background 0.15s;
-    }
-
-    #sight-list li.active .sight-dot {
-      background: var(--accent);
-    }
-
-    /* selected route list */
-    #route-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    #route-list {
-      list-style: none;
-      overflow-y: auto;
-      flex: 1;
-      padding: 0 0 8px;
-    }
-
-    #route-list li {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      font-size: 0.78rem;
-      border-bottom: 1px solid #161f30;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
+    #route-section { flex:1;display:flex;flex-direction:column;overflow:hidden; }
+    #route-list    { list-style:none;overflow-y:auto;flex:1;padding:0 0 8px; }
+    #route-list li { display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:0.78rem;border-bottom:1px solid #161f30;cursor:pointer;transition:background 0.15s; }
     #route-list li:hover { background: var(--panel2); }
+    .route-idx    { font-size:0.65rem;font-family:monospace;color:var(--accent2);min-width:18px; }
+    .route-name   { flex:1;color:var(--text); }
+    .route-remove { color:var(--muted);font-size:0.75rem;opacity:0.6; }
+    .route-remove:hover { color:var(--red);opacity:1; }
+    #route-empty  { color:var(--muted);font-size:0.75rem;font-style:italic;padding:10px 14px; }
 
-    .route-idx {
-      font-size: 0.65rem;
-      font-family: monospace;
-      color: var(--accent2);
-      min-width: 18px;
-    }
-
-    .route-name { flex: 1; color: var(--text); }
-
-    .route-remove {
-      color: var(--muted);
-      font-size: 0.75rem;
-      opacity: 0.6;
-    }
-
-    .route-remove:hover { color: var(--red); opacity: 1; }
-
-    #route-empty {
-      color: var(--muted);
-      font-size: 0.75rem;
-      font-style: italic;
-      padding: 10px 14px;
-    }
-
-    /* reset button */
     .btn-reset {
-      margin: 10px 14px 14px;
-      padding: 9px 14px;
-      background: var(--red);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 0.8rem;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      flex-shrink: 0;
+      margin:10px 14px 14px; padding:9px 14px;
+      background:var(--red); color:#fff; border:none; border-radius:6px;
+      font-family:inherit; font-size:0.8rem; letter-spacing:0.06em;
+      cursor:pointer; transition:opacity 0.15s,transform 0.1s; flex-shrink:0;
     }
+    .btn-reset:hover  { opacity:0.85; transform:scale(1.01); }
+    .btn-reset:active { transform:scale(0.98); }
 
-    .btn-reset:hover { opacity: 0.85; transform: scale(1.01); }
-    .btn-reset:active { transform: scale(0.98); }
+    /* ── MAP ── */
+    #map { flex:1; z-index:1; }
 
-    /* ───────────────────────────────────────────
-       MAP
-    ─────────────────────────────────────────── */
-    #map {
-      flex: 1;
-      z-index: 1;
-    }
-
-    /* Leaflet popup override */
+    /* ── POPUP ── */
     .leaflet-popup-content-wrapper {
-      background: #0f2040;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-      max-width: 220px;
+      background:#0f2040; border:1px solid var(--border); border-radius:8px;
+      color:var(--text); box-shadow:0 8px 30px rgba(0,0,0,0.6); max-width:230px;
+    }
+    .leaflet-popup-tip { background:#0f2040; }
+    .leaflet-popup-content { font-family:inherit; font-size:0.8rem; line-height:1.55; }
+    .popup-emoji { font-size:1.8rem; display:block; margin-bottom:4px; }
+    .popup-title { font-size:0.9rem; font-weight:bold; color:var(--gold); margin-bottom:5px; }
+    .leaflet-popup-close-button { color:var(--muted) !important; }
+
+    /* ── Постоянная подпись рядом с маркером ── */
+    .marker-label {
+      background: rgba(8,18,36,0.85) !important;
+      border: 1px solid rgba(96,165,250,0.3) !important;
+      border-radius: 5px !important;
+      color: #cbd5e1 !important;
+      font-family: Georgia, serif !important;
+      font-size: 11.5px !important;
+      line-height: 1.35 !important;
+      padding: 3px 8px !important;
+      white-space: nowrap !important;
+      pointer-events: none !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.55) !important;
+    }
+    .marker-label::before { display:none !important; }  /* убираем хвостик тултипа */
+    .marker-label.active-label {
+      border-color: rgba(59,130,246,0.75) !important;
+      color: #bfdbfe !important;
+      background: rgba(15,32,64,0.92) !important;
     }
 
-    .leaflet-popup-tip { background: #0f2040; }
-
-    .leaflet-popup-content {
-      font-family: inherit;
-      font-size: 0.8rem;
-      line-height: 1.55;
-    }
-
-    .popup-title {
-      font-size: 0.9rem;
-      font-weight: bold;
-      color: var(--gold);
-      margin-bottom: 5px;
-    }
-
-    .leaflet-popup-close-button { color: var(--muted) !important; }
-
-    /* custom marker styles */
-    .custom-marker {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      border: 2px solid rgba(255,255,255,0.5);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    }
-
-    .custom-marker span {
-      transform: rotate(45deg);
-      font-size: 11px;
-      font-weight: bold;
-      color: #fff;
-      font-family: monospace;
-    }
-
-    /* ───────────────────────────────────────────
-       MOBILE
-    ─────────────────────────────────────────── */
-    @media (max-width: 640px) {
-      :root { --panel-w: 100%; }
-
-      .main { flex-direction: column; }
-
-      #sidebar {
-        width: 100%;
-        min-width: 100%;
-        max-height: 42vh;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-      }
-
-      #sight-list { max-height: 130px; }
-
-      #map { min-height: 40vh; }
-
-      header { padding: 10px 14px; }
-      .header-text h1 { font-size: 0.95rem; }
-      .header-badge { display: none; }
+    /* ── MOBILE ── */
+    @media (max-width:640px) {
+      :root { --panel-w:100%; }
+      .main { flex-direction:column; }
+      #sidebar { width:100%;min-width:100%;max-height:42vh;border-right:none;border-bottom:1px solid var(--border); }
+      #sight-list { max-height:130px; }
+      #map { min-height:40vh; }
+      header { padding:10px 14px; }
+      .header-text h1 { font-size:0.95rem; }
+      .header-badge { display:none; }
     }
   </style>
 
 </head>
 <body>
-
-<!-- ══════════════════════════════════════════
-     HEADER
-══════════════════════════════════════════ -->
 
 <header>
   <div class="header-text">
@@ -355,318 +167,294 @@
   <div class="header-badge">🌐 Leaflet 1.9.4</div>
 </header>
 
-<!-- ══════════════════════════════════════════
-     MAIN
-══════════════════════════════════════════ -->
-
 <div class="main">
-
-  <!-- SIDEBAR -->
-
   <aside id="sidebar">
-
-```
-<!-- ALL SIGHTS LIST -->
-<div class="sidebar-section">
-  <div class="sidebar-label">Достопримечательности</div>
-</div>
-<ul id="sight-list"></ul>
-
-<!-- SELECTED ROUTE -->
-<div id="route-section">
-  <div class="sidebar-section">
-    <div class="sidebar-label">Выбранный маршрут</div>
-  </div>
-  <ul id="route-list">
-    <li id="route-empty">Ничего не выбрано</li>
-  </ul>
-  <button class="btn-reset" onclick="resetAll()">✕ Сбросить всё</button>
-</div>
-```
-
+    <div class="sidebar-section"><div class="sidebar-label">Достопримечательности</div></div>
+    <ul id="sight-list"></ul>
+    <div id="route-section">
+      <div class="sidebar-section"><div class="sidebar-label">Выбранный маршрут</div></div>
+      <ul id="route-list"><li id="route-empty">Ничего не выбрано</li></ul>
+      <button class="btn-reset" onclick="resetAll()">✕ Сбросить всё</button>
+    </div>
   </aside>
-
-  <!-- MAP -->
-
   <div id="map"></div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════════════ -->
-
 <script>
-/* ─────────────────────────────────────────
-   DATA — список достопримечательностей
-───────────────────────────────────────── */
+/* ════════════════════════════════════════
+   DATA
+════════════════════════════════════════ */
 const SIGHTS = [
-  {
-    id: 0,
-    name: 'Врата ада (Дарваза)',
-    coords: [40.2525, 58.4396],
-    desc: 'Кратер горящего природного газа в пустыне Каракумы, горит с 1971 года.'
-  },
-  {
-    id: 1,
-    name: 'Древний Мерв',
-    coords: [37.6628, 62.1925],
-    desc: 'Древний город на Шёлковом пути, объект ЮНЕСКО.'
-  },
-  {
-    id: 2,
-    name: 'Куня-Ургенч',
-    coords: [42.3277, 59.1544],
-    desc: 'Руины древней столицы Хорезма, объект ЮНЕСКО.'
-  },
-  {
-    id: 3,
-    name: 'Парфянские крепости Ниса',
-    coords: [37.9667, 58.1950],
-    desc: 'Столица Парфянского царства, объект ЮНЕСКО.'
-  },
-  {
-    id: 4,
-    name: 'Каньон Янкыкала',
-    coords: [40.6322, 54.9267],
-    desc: 'Цветные каньоны и скалы, «огненная крепость» Туркменистана.'
-  },
-  {
-    id: 5,
-    name: 'Мечеть Туркменбаши Рухы (Гыпджак)',
-    coords: [38.0178, 58.2528],
-    desc: 'Одна из самых больших мечетей Центральной Азии.'
-  }
+  { id:0, name:'Врата ада (Дарваза)',           emoji:'🔥', coords:[40.2525,58.4396], desc:'Кратер горящего природного газа в пустыне Каракумы, горит с 1971 года.' },
+  { id:1, name:'Древний Мерв',                  emoji:'🏛️', coords:[37.6628,62.1925], desc:'Древний город на Шёлковом пути, объект ЮНЕСКО.' },
+  { id:2, name:'Куня-Ургенч',                   emoji:'🕌', coords:[42.3277,59.1544], desc:'Руины древней столицы Хорезма, объект ЮНЕСКО.' },
+  { id:3, name:'Парфянские крепости Ниса',      emoji:'🏯', coords:[37.9667,58.1950], desc:'Столица Парфянского царства, объект ЮНЕСКО.' },
+  { id:4, name:'Каньон Янкыкала',               emoji:'🏜️', coords:[40.6322,54.9267], desc:'Цветные каньоны и скалы, «огненная крепость» Туркменистана.' },
+  { id:5, name:'Мечеть Туркменбаши Рухы',       emoji:'🕌', coords:[38.0178,58.2528], desc:'Одна из самых больших мечетей Центральной Азии (Гыпджак).' }
 ];
 
-/* ─────────────────────────────────────────
+/* ════════════════════════════════════════
    STATE
-───────────────────────────────────────── */
-// selectedOrder: массив id в порядке выбора
+════════════════════════════════════════ */
 let selectedOrder = [];
 
-/* ─────────────────────────────────────────
+/* ════════════════════════════════════════
    MAP INIT
-───────────────────────────────────────── */
+════════════════════════════════════════ */
 const map = L.map('map', {
-  center: [38.5, 59.0],
+  center: [39.0, 59.2],
   zoom: 6,
-  zoomControl: true
+  zoomControl: true,
+  maxBounds: [[34.5, 50.5],[44.0, 68.0]],
+  maxBoundsViscosity: 1.0,
+  minZoom: 5,
+  maxZoom: 13
 });
 
-// Тёмная тайловая тема (CartoDB Dark Matter)
+// Тёмные тайлы базовой карты
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" style="color:#64748b">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/" style="color:#64748b">CARTO</a>',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" style="color:#64748b">OSM</a> &copy; <a href="https://carto.com/" style="color:#64748b">CARTO</a>',
   subdomains: 'abcd',
   maxZoom: 19
 }).addTo(map);
 
-/* ─────────────────────────────────────────
-   MARKER ICON FACTORY
-   inactive — оранжевый / active — синий
-───────────────────────────────────────── */
-function makeIcon(isActive, orderNum) {
-  const color  = isActive ? '#3b82f6' : '#f59e0b';
-  const border = isActive ? '#1d4ed8' : '#b45309';
-  const label  = isActive ? String(orderNum) : '◆';
-  const size   = 34;
+/* ════════════════════════════════════════
+   МАСКА — скрываем всё кроме Туркменистана
+   Загружаем точный GeoJSON; при ошибке — fallback
+════════════════════════════════════════ */
 
-  const html = `
-    <div style="
-      width:${size}px; height:${size}px;
-      background:${color};
-      border:2px solid ${border};
-      border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);
-      display:flex; align-items:center; justify-content:center;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.6);
-    ">
-      <span style="
-        transform:rotate(45deg);
-        font-size:${isActive ? '11px' : '14px'};
-        color:#fff;
-        font-weight:bold;
-        font-family:monospace;
-        line-height:1;
-      ">${label}</span>
-    </div>`;
+// Мировой прямоугольник (внешний полигон маски)
+const WORLD_BOX = [[-90,-180],[-90,180],[90,180],[90,-180],[-90,-180]];
 
-  return L.divIcon({
-    html,
-    className: '',
-    iconSize:   [size, size],
-    iconAnchor: [size / 2, size],
-    popupAnchor:[0, -size]
-  });
-}
+// Упрощённый запасной контур
+const TKM_FALLBACK = [
+  [37.60,60.35],[37.48,61.08],[37.73,61.23],[38.03,61.19],[38.24,61.97],
+  [38.47,63.18],[39.05,63.24],[39.31,63.65],[39.52,64.17],[39.25,64.39],
+  [38.87,65.60],[38.27,65.67],[37.87,65.22],[37.46,65.17],[36.92,65.53],
+  [36.53,66.52],[35.97,66.70],[35.52,66.52],[35.10,66.12],[35.07,65.78],
+  [34.95,65.55],[34.75,65.21],[34.74,64.98],[34.64,64.63],[34.28,64.24],
+  [34.04,64.02],[33.73,63.60],[33.37,63.41],[33.06,63.33],[32.90,63.05],
+  [32.81,62.63],[32.60,62.44],[32.39,62.25],[32.11,61.96],[31.89,61.69],
+  [31.64,61.43],[31.51,61.24],[31.36,60.93],[31.16,60.73],[30.98,60.51],
+  [30.80,60.29],[30.60,60.07],[30.39,59.82],[30.13,59.50],[29.85,59.17],
+  [29.63,58.92],[29.41,58.66],[29.17,58.34],[28.99,58.10],[28.80,57.85],
+  [28.66,57.60],[28.53,57.34],[28.48,57.08],[28.50,56.77],[28.56,56.53],
+  [28.73,56.24],[28.96,56.00],[29.19,55.82],[29.46,55.63],[29.73,55.50],
+  [29.97,55.40],[30.23,55.32],[30.57,55.28],[30.87,55.28],[31.17,55.31],
+  [31.49,55.39],[31.81,55.52],[32.13,55.70],[32.43,55.89],[32.67,56.09],
+  [32.90,56.29],[33.12,56.52],[33.37,56.80],[33.55,57.04],[33.76,57.32],
+  [33.96,57.59],[34.14,57.87],[34.35,58.15],[34.55,58.45],[34.73,58.68],
+  [34.89,58.89],[35.02,59.11],[35.14,59.36],[35.23,59.61],[35.30,59.82],
+  [35.35,60.07],[35.43,60.33],[35.53,60.58],[35.66,60.82],[35.81,61.04],
+  [35.99,61.22],[36.18,61.40],[36.33,61.53],[36.53,61.65],[36.76,61.80],
+  [37.01,61.92],[37.24,62.02],[37.48,62.11],[37.70,62.21],[37.88,62.32],
+  [38.07,62.49],[38.26,62.71],[38.38,62.92],[38.46,63.18]
+];
 
-/* ─────────────────────────────────────────
-   POLYLINE (маршрут)
-───────────────────────────────────────── */
-let routeLine = null;
-
-function updatePolyline() {
-  // Удаляем старую линию
-  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-
-  if (selectedOrder.length < 2) return; // линия только от 2+ точек
-
-  const coords = selectedOrder.map(id => SIGHTS[id].coords);
-
-  routeLine = L.polyline(coords, {
-    color:     '#e63939',
-    weight:    4,
-    dashArray: '8, 12',
-    opacity:   0.9
+function applyMask(holeCoords) {
+  // Полигон-маска: мировой bbox с дырой в форме страны
+  L.polygon([WORLD_BOX, holeCoords], {
+    fillColor: '#0b1120',
+    fillOpacity: 0.93,
+    stroke: false,
+    interactive: false
   }).addTo(map);
 }
 
-/* ─────────────────────────────────────────
-   MARKERS — создание
-───────────────────────────────────────── */
-const markers = {}; // id → leaflet marker
+function drawBorder(coords) {
+  L.polygon(coords, {
+    color: '#3b82f6', weight: 2,
+    fillOpacity: 0, opacity: 0.65,
+    interactive: false
+  }).addTo(map);
+}
+
+// Пробуем загрузить точный GeoJSON
+fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+  .then(r => r.json())
+  .then(data => {
+    const tkm = data.features.find(f => f.properties && f.properties.ISO_A3 === 'TKM');
+    if (!tkm) { useFallback(); return; }
+    const geom = tkm.geometry;
+    let holes = [];
+    if (geom.type === 'Polygon') {
+      holes = [geom.coordinates[0].map(c => [c[1],c[0]])];
+    } else if (geom.type === 'MultiPolygon') {
+      holes = geom.coordinates.map(p => p[0].map(c => [c[1],c[0]]));
+    }
+    // Маска
+    L.polygon([WORLD_BOX, ...holes], {
+      fillColor: '#0b1120', fillOpacity: 0.93,
+      stroke: false, interactive: false
+    }).addTo(map);
+    // Граница
+    L.geoJSON(tkm, {
+      style: { color:'#3b82f6', weight:2, fillOpacity:0, opacity:0.65 },
+      interactive: false
+    }).addTo(map);
+  })
+  .catch(() => useFallback());
+
+function useFallback() {
+  applyMask(TKM_FALLBACK);
+  drawBorder(TKM_FALLBACK);
+}
+
+/* ════════════════════════════════════════
+   ICON FACTORY  (emoji внутри неактивных,
+                  номер — внутри активных)
+════════════════════════════════════════ */
+function makeIcon(sight, isActive, orderNum) {
+  const size = 36;
+  const bg   = isActive ? '#2563eb' : '#d97706';
+  const bdr  = isActive ? '#1d4ed8' : '#92400e';
+
+  const inner = isActive
+    ? `<span style="transform:rotate(45deg);font-size:12px;color:#fff;font-weight:bold;font-family:monospace;line-height:1;">${orderNum}</span>`
+    : `<span style="transform:rotate(45deg);font-size:17px;line-height:1;">${sight.emoji}</span>`;
+
+  return L.divIcon({
+    html: `<div style="width:${size}px;height:${size}px;background:${bg};border:2px solid ${bdr};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.6);">${inner}</div>`,
+    className: '',
+    iconSize:   [size, size],
+    iconAnchor: [size/2, size],
+    popupAnchor:[0, -size-4]
+  });
+}
+
+/* ════════════════════════════════════════
+   POLYLINE
+════════════════════════════════════════ */
+let routeLine = null;
+function updatePolyline() {
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  if (selectedOrder.length < 2) return;
+  routeLine = L.polyline(selectedOrder.map(id => SIGHTS[id].coords), {
+    color:'#e63939', weight:4, dashArray:'8,12', opacity:0.9
+  }).addTo(map);
+}
+
+/* ════════════════════════════════════════
+   MARKERS + PERMANENT LABELS
+════════════════════════════════════════ */
+const markers = {};
+const labelTooltips = {};
 
 SIGHTS.forEach(sight => {
-  const marker = L.marker(sight.coords, { icon: makeIcon(false, 0) })
+  // Маркер
+  const m = L.marker(sight.coords, { icon: makeIcon(sight, false, 0) })
     .addTo(map)
     .bindPopup(
-      `<div class="popup-title">${sight.name}</div><div>${sight.desc}</div>`,
-      { maxWidth: 210 }
+      `<span class="popup-emoji">${sight.emoji}</span><div class="popup-title">${sight.name}</div><div>${sight.desc}</div>`,
+      { maxWidth:225 }
     );
+  m.on('click', () => toggleSight(sight.id));
+  markers[sight.id] = m;
 
-  // Клик по маркеру → выбрать / снять
-  marker.on('click', () => toggleSight(sight.id));
-
-  markers[sight.id] = marker;
+  // Постоянная текстовая подпись (tooltip permanent)
+  const tip = L.tooltip({
+    permanent: true,
+    direction: 'right',
+    offset: [14, -20],
+    className: 'marker-label',
+    interactive: false
+  })
+    .setContent(`${sight.emoji}&nbsp;${sight.name}`)
+    .setLatLng(sight.coords);
+  map.addLayer(tip);
+  labelTooltips[sight.id] = tip;
 });
 
-/* ─────────────────────────────────────────
-   SIDEBAR LIST — создание
-───────────────────────────────────────── */
+/* ════════════════════════════════════════
+   SIDEBAR LIST
+════════════════════════════════════════ */
 const sightListEl = document.getElementById('sight-list');
-
 SIGHTS.forEach(sight => {
   const li = document.createElement('li');
   li.id = `sl-${sight.id}`;
-  li.innerHTML = `
-    <span class="sight-dot" id="dot-${sight.id}"></span>
-    <span>${sight.name}</span>`;
+  li.innerHTML = `<span class="sight-emoji">${sight.emoji}</span><span class="sight-dot" id="dot-${sight.id}"></span><span>${sight.name}</span>`;
   li.addEventListener('click', () => toggleSight(sight.id));
   sightListEl.appendChild(li);
 });
 
-/* ─────────────────────────────────────────
-   ROUTE LIST — обновление
-───────────────────────────────────────── */
+/* ════════════════════════════════════════
+   ROUTE LIST
+════════════════════════════════════════ */
 function renderRouteList() {
   const ul = document.getElementById('route-list');
   const empty = document.getElementById('route-empty');
-
-  // Удаляем все кроме #route-empty
-  Array.from(ul.children).forEach(c => {
-    if (c.id !== 'route-empty') ul.removeChild(c);
-  });
-
-  if (selectedOrder.length === 0) {
-    empty.style.display = '';
-    return;
-  }
-
+  Array.from(ul.children).forEach(c => { if (c.id !== 'route-empty') ul.removeChild(c); });
+  if (!selectedOrder.length) { empty.style.display = ''; return; }
   empty.style.display = 'none';
-
   selectedOrder.forEach((id, idx) => {
-    const sight = SIGHTS[id];
+    const s = SIGHTS[id];
     const li = document.createElement('li');
-    li.innerHTML = `
-      <span class="route-idx">${idx + 1}.</span>
-      <span class="route-name">${sight.name}</span>
-      <span class="route-remove" title="Убрать">✕</span>`;
-    li.querySelector('.route-remove').addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleSight(id);
-    });
+    li.innerHTML = `<span class="route-idx">${idx+1}.</span><span style="font-size:.95rem">${s.emoji}</span><span class="route-name">${s.name}</span><span class="route-remove" title="Убрать">✕</span>`;
+    li.querySelector('.route-remove').addEventListener('click', e => { e.stopPropagation(); toggleSight(id); });
     ul.appendChild(li);
   });
 }
 
-/* ─────────────────────────────────────────
-   TOGGLE SIGHT — главная логика
-───────────────────────────────────────── */
+/* ════════════════════════════════════════
+   TOGGLE
+════════════════════════════════════════ */
 function toggleSight(id) {
   const idx = selectedOrder.indexOf(id);
-
   if (idx === -1) {
-    // Добавить
     selectedOrder.push(id);
-    // Открыть popup и показать маркер
     markers[id].openPopup();
-    map.panTo(SIGHTS[id].coords, { animate: true, duration: 0.5 });
+    map.panTo(SIGHTS[id].coords, { animate:true, duration:0.5 });
   } else {
-    // Убрать
     selectedOrder.splice(idx, 1);
     markers[id].closePopup();
   }
-
   refreshUI();
 }
 
-/* ─────────────────────────────────────────
-   REFRESH UI — синхронизирует всё
-───────────────────────────────────────── */
+/* ════════════════════════════════════════
+   REFRESH
+════════════════════════════════════════ */
 function refreshUI() {
-  // Обновляем маркеры
   SIGHTS.forEach(sight => {
-    const orderIdx = selectedOrder.indexOf(sight.id);
-    const isActive = orderIdx !== -1;
-    markers[sight.id].setIcon(makeIcon(isActive, orderIdx + 1));
+    const oi = selectedOrder.indexOf(sight.id);
+    const isActive = oi !== -1;
 
-    // sidebar list item
+    markers[sight.id].setIcon(makeIcon(sight, isActive, oi + 1));
+
+    // Подпись: выделяем активную
+    const tipEl = labelTooltips[sight.id]?.getElement?.();
+    if (tipEl) tipEl.classList.toggle('active-label', isActive);
+
+    // Sidebar
     const li = document.getElementById(`sl-${sight.id}`);
     if (isActive) {
       li.classList.add('active');
-      // заменяем dot на num
       const dot = li.querySelector('.sight-dot');
       if (dot) {
-        const num = document.createElement('span');
-        num.className = 'sight-num';
-        num.id = `dot-${sight.id}`;
-        num.textContent = orderIdx + 1;
+        const num = Object.assign(document.createElement('span'), { className:'sight-num', id:`dot-${sight.id}`, textContent: oi+1 });
         li.replaceChild(num, dot);
       } else {
         const num = document.getElementById(`dot-${sight.id}`);
-        if (num) num.textContent = orderIdx + 1;
+        if (num) num.textContent = oi + 1;
       }
     } else {
       li.classList.remove('active');
-      // возвращаем dot
       const num = document.getElementById(`dot-${sight.id}`);
-      if (num && num.classList.contains('sight-num')) {
-        const dot = document.createElement('span');
-        dot.className = 'sight-dot';
-        dot.id = `dot-${sight.id}`;
+      if (num?.classList.contains('sight-num')) {
+        const dot = Object.assign(document.createElement('span'), { className:'sight-dot', id:`dot-${sight.id}` });
         li.replaceChild(dot, num);
       }
     }
   });
-
-  // Полилиния
   updatePolyline();
-
-  // Список маршрута
   renderRouteList();
 }
 
-/* ─────────────────────────────────────────
-   RESET ALL
-───────────────────────────────────────── */
-function resetAll() {
-  selectedOrder = [];
-  map.closePopup();
-  refreshUI();
-}
+/* ════════════════════════════════════════
+   RESET
+════════════════════════════════════════ */
+function resetAll() { selectedOrder = []; map.closePopup(); refreshUI(); }
 
-/* ─────────────────────────────────────────
-   INITIAL RENDER
-───────────────────────────────────────── */
 refreshUI();
 </script>
 
