@@ -588,11 +588,13 @@ async function smcAnalysis(symbol){
   let bullScore=0, bearScore=0;
   const reasons={bull:[], bear:[]};
 
-  // 1. Order Blocks — цена входит в бычий OB = сигнал лонг
-  const bullOBs = ob1h.filter(ob=>ob.type==='bull'&&ob.fresh&&price>=ob.low&&price<=ob.high*1.01);
-  const bearOBs = ob1h.filter(ob=>ob.type==='bear'&&ob.fresh&&price<=ob.high&&price>=ob.low*0.99);
-  const bullOB4h= ob4h.filter(ob=>ob.type==='bull'&&ob.fresh&&price>=ob.low*0.99&&price<=ob.high*1.02);
-  const bearOB4h= ob4h.filter(ob=>ob.type==='bear'&&ob.fresh&&price<=ob.high*1.01&&price>=ob.low*0.98);
+  // 1. Order Blocks
+  // Бычий OB: цена касается зоны СНИЗУ (price внутри или чуть выше low, но high должен быть >= price — т.е. OB ниже/вокруг цены)
+  // Медвежий OB: цена касается зоны СВЕРХУ (price внутри или чуть ниже high — OB выше/вокруг цены)
+  const bullOBs = ob1h.filter(ob=>ob.type==='bull'&&ob.fresh&&ob.high>=price*0.99&&ob.low<=price*1.01&&ob.high<=price*1.03);
+  const bearOBs = ob1h.filter(ob=>ob.type==='bear'&&ob.fresh&&ob.low<=price*1.01&&ob.high>=price*0.99&&ob.low>=price*0.97);
+  const bullOB4h= ob4h.filter(ob=>ob.type==='bull'&&ob.fresh&&ob.high>=price*0.98&&ob.low<=price*1.02&&ob.high<=price*1.04);
+  const bearOB4h= ob4h.filter(ob=>ob.type==='bear'&&ob.fresh&&ob.low<=price*1.02&&ob.high>=price*0.98&&ob.low>=price*0.96);
 
   if(bullOBs.length){bullScore+=3;reasons.bull.push(`🟩 OB бычий 1H ($${fmt(bullOBs[0].low)}-$${fmt(bullOBs[0].high)})`);}
   if(bearOBs.length){bearScore+=3;reasons.bear.push(`🟥 OB медвежий 1H ($${fmt(bearOBs[0].low)}-$${fmt(bearOBs[0].high)})`);}
@@ -689,14 +691,16 @@ async function smcAnalysis(symbol){
   const buf=atr*0.15;
 
   if(direction==='long'){
-    // Entry: внутри бычьего OB или у FVG, иначе рыночный
-    const obEntry=bullOBs[0]||bullOB4h[0];
-    const fvgEntry=bullFVGs[0]||bullFVG4h[0];
+    // Entry: только OB/FVG НИЖЕ текущей цены (иначе — рыночный)
+    // Бычий OB должен быть ниже цены, чтобы цена могла к нему откатиться
+    const obEntry=[...bullOBs,...bullOB4h].filter(ob=>ob.high<price*1.002).sort((a,b)=>b.high-a.high)[0];
+    const fvgEntry=[...bullFVGs,...bullFVG4h].filter(f=>f.top<price*1.002).sort((a,b)=>b.top-a.top)[0];
     if(obEntry){
-      entry=+(obEntry.midpoint||price).toFixed(6);
+      // Входим по текущей цене если она уже внутри OB, иначе ждём ретест (показываем зону)
+      entry=+(price<=obEntry.high&&price>=obEntry.low ? price : obEntry.midpoint).toFixed(6);
       entryType=`🟩 Вход в OB ($${fmt(obEntry.low)}-$${fmt(obEntry.high)})`;
     } else if(fvgEntry){
-      entry=+(fvgEntry.mid||price).toFixed(6);
+      entry=+(price<=fvgEntry.top&&price>=fvgEntry.bottom ? price : fvgEntry.mid).toFixed(6);
       entryType=`📊 Вход в FVG ($${fmt(fvgEntry.bottom)}-$${fmt(fvgEntry.top)})`;
     } else if(freshBullSweep.length){
       entry=+(price*1.0003).toFixed(6);
@@ -705,6 +709,8 @@ async function smcAnalysis(symbol){
       entry=+(price*1.0005).toFixed(6);
       entryType=`📊 Рыночный`;
     }
+    // Финальная защита: entry не может быть выше цены для лонга
+    if(entry>price*1.005){entry=+(price*1.0005).toFixed(6);entryType=`📊 Рыночный`;}
     // SL: под последним swing low или под OB — берём наиболее близкий разумный уровень
     const lastSwingLow=struct1h.swingLows?.slice(-1)[0];
     const slBySwing=lastSwingLow&&lastSwingLow.price<entry?lastSwingLow.price-buf:null;
@@ -729,13 +735,14 @@ async function smcAnalysis(symbol){
     tp3Note=nextSwingH?.[1]?`Swing H $${fmt(nextSwingH[1].price)}`:`ATR×5`;
 
   } else if(direction==='short'){
-    const obEntry=bearOBs[0]||bearOB4h[0];
-    const fvgEntry=bearFVGs[0]||bearFVG4h[0];
+    // Медвежий OB должен быть ВЫШЕ текущей цены
+    const obEntry=[...bearOBs,...bearOB4h].filter(ob=>ob.low>price*0.998).sort((a,b)=>a.low-b.low)[0];
+    const fvgEntry=[...bearFVGs,...bearFVG4h].filter(f=>f.bottom>price*0.998).sort((a,b)=>a.bottom-b.bottom)[0];
     if(obEntry){
-      entry=+(obEntry.midpoint||price).toFixed(6);
+      entry=+(price>=obEntry.low&&price<=obEntry.high ? price : obEntry.midpoint).toFixed(6);
       entryType=`🟥 Вход в OB ($${fmt(obEntry.low)}-$${fmt(obEntry.high)})`;
     } else if(fvgEntry){
-      entry=+(fvgEntry.mid||price).toFixed(6);
+      entry=+(price>=fvgEntry.bottom&&price<=fvgEntry.top ? price : fvgEntry.mid).toFixed(6);
       entryType=`📊 Вход в FVG ($${fmt(fvgEntry.bottom)}-$${fmt(fvgEntry.top)})`;
     } else if(freshBearSweep.length){
       entry=+(price*0.9997).toFixed(6);
@@ -744,6 +751,8 @@ async function smcAnalysis(symbol){
       entry=+(price*0.9995).toFixed(6);
       entryType=`📊 Рыночный`;
     }
+    // Финальная защита: entry не может быть ниже цены для шорта
+    if(entry<price*0.995){entry=+(price*0.9995).toFixed(6);entryType=`📊 Рыночный`;}
     const lastSwingHigh=struct1h.swingHighs?.slice(-1)[0];
     const slBySwing=lastSwingHigh&&lastSwingHigh.price>entry?lastSwingHigh.price+buf:null;
     const slByOB=obEntry?obEntry.high+buf:null;
