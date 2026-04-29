@@ -2,426 +2,1255 @@
 
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Карта достопримечательностей Туркменистана</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMC SIGNAL TERMINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf9f6;--surface:#ffffff;--surface2:#f5f2ee;
+  --border:#e8e2d9;--border2:#d6cfc4;
+  --accent:#8a6a3e;--accent2:#6b5230;
+  --green:#2e7d52;--red:#c0392b;--yellow:#a07820;--purple:#7b5ea7;--orange:#c0621a;
+  --text:#3a3028;--text2:#8a7d70;--text3:#b0a498;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden;}
+.bg-fx,.bg-grid,.bg-g1,.bg-g2,.scanline{display:none;}
+@keyframes d1{}@keyframes d2{}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 16px 80px;}
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+/* HEADER */
+header{padding:20px 0 16px;border-bottom:1px solid var(–border);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.logo{font-family:‘Orbitron’,monospace;font-weight:900;font-size:17px;letter-spacing:5px;background:linear-gradient(135deg,var(–orange),var(–accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 12px rgba(255,149,0,.3));}
+.logo-sub{font-size:8px;letter-spacing:3px;color:var(–text2);margin-top:3px;}
+.hdr-right{display:flex;align-items:center;gap:12px;}
+.live-badge{display:flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(–border2);background:var(–surface2);font-size:9px;letter-spacing:2px;color:var(–green);}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(–green);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
-  <style>
-    :root {
-      --bg:       #07111f;
-      --panel:    #111827;
-      --panel2:   #1a2438;
-      --border:   #1e3a5f;
-      --accent:   #3b82f6;
-      --accent2:  #60a5fa;
-      --red:      #e63939;
-      --gold:     #f59e0b;
-      --text:     #e2e8f0;
-      --muted:    #64748b;
-      --selected: #1d4ed8;
-      --panel-w:  280px;
-    }
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+/* BTC */
+#btcBar{padding:10px 16px;border:1px solid var(–border2);background:var(–surface);margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+.btc-tag{padding:3px 10px;font-size:9px;letter-spacing:2px;font-weight:700;border:1px solid;}
+.btc-tag.bull{color:var(–green);border-color:var(–green);background:rgba(46,125,82,.07);}
+.btc-tag.bear{color:var(–red);border-color:var(–red);background:rgba(192,57,43,.07);}
+.btc-tag.neut{color:var(–yellow);border-color:var(–yellow);background:rgba(160,120,32,.07);}
 
-    body {
-      font-family: 'Georgia', 'Times New Roman', serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+/* CONTROLS */
+.controls{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.scan-btn{font-family:‘Orbitron’,monospace;font-weight:700;font-size:12px;letter-spacing:4px;padding:16px;border:1px solid var(–border2);background:var(–surface2);color:var(–text);cursor:pointer;transition:all .25s;position:relative;overflow:hidden;width:100%;}
+.scan-btn:hover{background:var(–surface2);}
+.scan-btn:disabled{opacity:.3;cursor:not-allowed;}
+.ctrl-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.ctrl-group{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;padding:14px 8px;border:2px solid var(–accent);background:var(–surface);cursor:pointer;min-height:68px;-webkit-tap-highlight-color:transparent;border-radius:4px;box-shadow:0 1px 4px rgba(138,106,62,.1);}
+.ctrl-label{font-size:9px;letter-spacing:2px;color:var(–text);text-align:center;line-height:1.5;font-weight:700;}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-sl{position:absolute;inset:0;background:#b0a090;border-radius:24px;cursor:pointer;transition:.3s;display:block;border:1px solid #9a8878;}
+.toggle-sl:before{content:’’;position:absolute;width:16px;height:16px;left:4px;bottom:4px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.toggle input:checked+.toggle-sl{background:var(–green);box-shadow:none;}
+.toggle input:checked+.toggle-sl:before{transform:translateX(20px);background:#fff;}
 
-    header {
-      background: linear-gradient(135deg,#0d1b2e 0%,#0f2645 50%,#0d1b2e 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 24px 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0; position: relative; overflow: hidden;
-    }
-    header::before {
-      content:'★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★';
-      position:absolute; top:4px; left:50%; transform:translateX(-50%);
-      font-size:9px; color:var(--gold); opacity:.35; letter-spacing:6px; white-space:nowrap;
-    }
-    .header-text h1 { font-size:1.2rem; font-weight:normal; letter-spacing:.06em; color:#f1f5f9; }
-    .header-text p  { font-size:.75rem; color:var(--gold); letter-spacing:.12em; margin-top:2px; font-style:italic; }
-    .header-badge   { background:var(--border); border:1px solid var(--accent); border-radius:6px; padding:6px 14px; font-size:.72rem; color:var(--accent2); }
+/* STATS */
+#statsBar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(–border);border:1px solid var(–border2);margin-bottom:16px;}
+.stat-cell{background:var(–surface);padding:11px 14px;text-align:center;}
+.stat-label{font-size:8px;letter-spacing:2px;color:var(–text2);margin-bottom:5px;}
+.stat-value{font-family:‘Orbitron’,monospace;font-weight:700;font-size:15px;}
+.sv-g{color:var(–green);}.sv-r{color:var(–red);}.sv-y{color:var(–yellow);}.sv-p{color:var(–purple);}.sv-o{color:var(–orange);}
 
-    .main { display:flex; flex:1; overflow:hidden; min-height:0; }
+/* ALERTS */
+.sec-label{font-size:9px;letter-spacing:4px;color:var(–text2);margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.sec-label::after{content:’’;flex:1;height:1px;background:var(–border);}
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:6px;border:1px solid;cursor:pointer;transition:all .2s;animation:sIn .3s ease;}
+@keyframes sIn{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+.alert-item.long{border-color:rgba(46,125,82,.3);background:rgba(46,125,82,.04);}
+.alert-item.short{border-color:rgba(192,57,43,.3);background:rgba(192,57,43,.04);}
+.a-sym{font-family:‘Orbitron’,monospace;font-weight:700;font-size:12px;min-width:85px;}
+.a-sym.long{color:var(–green);}.a-sym.short{color:var(–red);}
+.a-prob{font-family:‘Orbitron’,monospace;font-size:15px;font-weight:700;min-width:48px;}
+.a-info{flex:1;font-size:10px;color:var(–text2);line-height:1.5;}
+.a-rr{font-size:11px;color:var(–purple);}
 
-    #sidebar {
-      width:var(--panel-w); min-width:var(--panel-w);
-      background:var(--panel); border-right:1px solid var(--border);
-      display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;
-    }
-    .sidebar-section { padding:14px 14px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
-    .sidebar-label   { font-size:.62rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+/* PROGRESS */
+#scanProg{margin-bottom:14px;display:none;}
+.prog-label{font-size:9px;letter-spacing:3px;color:var(–text2);margin-bottom:6px;}
+.prog-track{height:2px;background:var(–border2);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(–accent);border-radius:2px;transition:width .25s;}
+.prog-coins{font-size:9px;color:var(–text2);margin-top:4px;}
 
-    #sight-wrap { flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+/* GRID */
+.scanner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:20px;}
+.coin-card{background:var(–surface);border:1px solid var(–border2) !important;padding:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.coin-card::before{content:’’;position:absolute;top:0;left:0;right:0;height:2px;}
+.coin-card.long::before{background:var(–green);}
+.coin-card.short::before{background:var(–red);}
+.coin-card.flat::before{background:var(–border2);}
+.coin-card.sweep::before{background:var(–orange);animation:glowBar 1.5s infinite alternate;}
+@keyframes glowBar{}
+.coin-card:hover{border-color:var(–accent) !important;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.coin-card.long{border-color:rgba(46,125,82,.35) !important;}
+.coin-card.short{border-color:rgba(192,57,43,.35) !important;}
+.coin-card.sweep{border-color:rgba(192,98,26,.4) !important;}
+.cc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.cc-sym{color:var(–text);}
+.cc-prob{font-family:‘Orbitron’,monospace;font-weight:700;font-size:12px;}
+.cc-prob.high{color:var(–green);}.cc-prob.med{color:var(–yellow);}.cc-prob.low{color:var(–red);}
+.cc-price{font-size:11px;color:var(–accent);margin-bottom:5px;}
+.cc-trend{font-size:9px;letter-spacing:2px;font-weight:700;}
+.cc-trend.long{color:var(–green);}.cc-trend.short{color:var(–red);}
+.cc-trend.flat{color:var(–text2);}.cc-trend.sweep{color:var(–orange);}
+.cc-trend.scanning{color:var(–text3);animation:blink 1s infinite;}
+.cc-smc{font-size:8px;color:var(–text2);margin-top:3px;line-height:1.5;}
+.cc-rr{font-size:9px;color:var(–purple);margin-top:2px;}
 
-    #sight-list { list-style:none; overflow-y:auto; flex:1; }
-    .region-header {
-      padding:7px 14px 5px;
-      font-size:.58rem; letter-spacing:.16em; text-transform:uppercase;
-      color:var(--gold); background:var(--panel2);
-      border-top:1px solid var(--border); border-bottom:1px solid var(--border);
-      position:sticky; top:0; z-index:2;
-    }
-    #sight-list li {
-      display:flex; align-items:center; gap:9px;
-      padding:7px 14px; cursor:pointer;
-      border-left:3px solid transparent;
-      transition:background .15s,border-color .15s;
-      font-size:.79rem; line-height:1.3;
-    }
-    #sight-list li:hover  { background:var(--panel2); border-left-color:var(--accent); }
-    #sight-list li.active { background:#162035; border-left-color:var(--accent); }
-    .sight-emoji { font-size:.9rem; flex-shrink:0; line-height:1; }
-    .sight-num   { width:19px;height:19px;border-radius:50%;background:var(--selected);color:#fff;font-size:.62rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:monospace; }
-    .sight-dot   { width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0; }
-    #sight-list li.active .sight-dot { background:var(--accent); }
+/* DETAIL */
+#detailPanel{margin-bottom:20px;}
+.detail-card{animation:slideUp .35s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.d-topbar{background:var(–surface2);border:1px solid var(–border2);border-bottom:none;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.d-pair{color:var(–text);}
+.d-price{font-size:15px;font-weight:700;color:var(–accent);}
+.d-price-label{font-size:8px;letter-spacing:3px;color:var(–text2);}
+.d-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.trend-pill{font-family:‘Orbitron’,monospace;font-weight:700;font-size:11px;letter-spacing:3px;padding:8px 18px;border:1px solid;}
+.trend-pill.long{color:var(–green);border-color:var(–green);background:rgba(46,125,82,.07);}
+.trend-pill.short{color:var(–red);border-color:var(–red);background:rgba(192,57,43,.07);}
+.trend-pill.flat{color:var(–yellow);border-color:var(–yellow);background:rgba(160,120,32,.06);}
+.trend-pill.sweep{color:var(–orange);border-color:var(–orange);background:rgba(192,98,26,.07);}
+.prob-badge{font-family:‘Orbitron’,monospace;font-weight:700;font-size:20px;padding:8px 14px;border:1px solid var(–border2);background:var(–surface);text-align:center;}
+.prob-badge-label{font-size:8px;letter-spacing:2px;color:var(–text2);margin-bottom:3px;}
+.d-section{border:1px solid var(–border2);border-top:none;background:var(–surface);}
+.d-section-title{font-size:8px;letter-spacing:4px;color:var(–text2);padding:7px 16px;background:var(–surface2);border-bottom:1px solid var(–border);}
+.d-grid{display:grid;gap:1px;background:var(–border);}
+.d-grid.g2{grid-template-columns:1fr 1fr;}
+.d-grid.g3{grid-template-columns:1fr 1fr 1fr;}
+.d-grid.g4{grid-template-columns:repeat(4,1fr);}
+.d-cell{background:var(–surface);padding:12px 14px;}
+.d-label{font-size:8px;letter-spacing:3px;color:var(–text2);margin-bottom:5px;}
+.d-value{font-size:12px;font-weight:700;line-height:1.4;}
+.d-value.green{color:var(–green);}.d-value.red{color:var(–red);}
+.d-value.yellow{color:var(–yellow);}.d-value.blue{color:var(–accent);}.d-value.orange{color:var(–orange);}
 
-    #route-section { flex-shrink:0; display:flex; flex-direction:column; max-height:38%; border-top:1px solid var(--border); }
-    #route-list    { list-style:none;overflow-y:auto;flex:1;padding:0 0 8px; }
-    #route-list li { display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:.78rem;border-bottom:1px solid #161f30;cursor:pointer;transition:background .15s; }
-    #route-list li:hover { background:var(--panel2); }
-    .route-idx    { font-size:.65rem;font-family:monospace;color:var(--accent2);min-width:18px; }
-    .route-name   { flex:1;color:var(--text); }
-    .route-remove { color:var(--muted);font-size:.75rem;opacity:.6; }
-    .route-remove:hover { color:var(--red);opacity:1; }
-    #route-empty  { color:var(--muted);font-size:.75rem;font-style:italic;padding:10px 14px; }
+/* SMC ZONES */
+.smc-zone{padding:10px 14px;border-left:3px solid;margin-bottom:4px;background:var(–surface2);font-size:11px;}
+.smc-zone.ob-bull{border-color:var(–green);}
+.smc-zone.ob-bear{border-color:var(–red);}
+.smc-zone.fvg-bull{border-color:rgba(46,125,82,.4);}
+.smc-zone.fvg-bear{border-color:rgba(192,57,43,.4);}
+.smc-zone.sweep-zone{border-color:var(–orange);}
+.zone-title{font-size:9px;letter-spacing:2px;font-weight:700;margin-bottom:3px;}
+.zone-range{color:var(–text2);font-size:10px;}
+.zone-note{font-size:9px;color:var(–text3);margin-top:2px;}
 
-    .btn-reset {
-      margin:10px 14px 14px; padding:9px 14px;
-      background:var(--red); color:#fff; border:none; border-radius:6px;
-      font-family:inherit; font-size:.8rem; cursor:pointer;
-      transition:opacity .15s,transform .1s; flex-shrink:0;
-    }
-    .btn-reset:hover  { opacity:.85; transform:scale(1.01); }
-    .btn-reset:active { transform:scale(.98); }
+/* TRADE */
+.trade-section{border:1px solid var(–border2);border-top:none;background:var(–surface2);padding:16px 20px;}
+.trade-title{font-family:‘Orbitron’,monospace;font-size:9px;letter-spacing:4px;color:var(–text2);margin-bottom:12px;}
+.trade-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.trade-box{border:1px solid var(–border2);background:var(–surface);padding:10px;text-align:center;position:relative;}
+.trade-box::before{content:’’;position:absolute;top:0;left:0;right:0;height:2px;}
+.trade-box.entry::before{background:var(–yellow);}
+.trade-box.sl::before{background:var(–red);}
+.trade-box.tp::before{background:var(–green);}
+.trade-lbl{font-size:8px;letter-spacing:2px;color:var(–text2);margin-bottom:6px;}
+.trade-num{font-family:‘Orbitron’,monospace;font-weight:700;font-size:10px;}
+.trade-box.entry .trade-num{color:var(–yellow);}
+.trade-box.sl .trade-num{color:var(–red);}
+.trade-box.tp .trade-num{color:var(–green);}
+.trade-note{font-size:8px;color:var(–text3);margin-top:3px;}
+.rr-bar{margin-top:12px;display:flex;align-items:center;gap:10px;}
+.rr-label{font-size:9px;letter-spacing:3px;color:var(–text2);white-space:nowrap;}
+.rr-track{flex:1;height:3px;background:var(–border2);border-radius:2px;overflow:hidden;}
+.rr-fill{height:100%;border-radius:2px;transition:width 1s;}
+.rr-value{font-family:‘Orbitron’,monospace;font-size:12px;white-space:nowrap;}
+.close-btn{margin-top:8px;width:100%;font-family:‘Space Mono’,monospace;font-size:10px;letter-spacing:3px;padding:8px;border:1px solid var(–border2);background:transparent;color:var(–text2);cursor:pointer;transition:all .2s;}
+.close-btn:hover{border-color:var(–red);color:var(–red);}
 
-    #map { flex:1; z-index:1; }
+/* TOAST */
+.toast{position:fixed;top:20px;right:20px;z-index:999;padding:12px 16px;border:1px solid;font-size:11px;letter-spacing:1px;animation:tIn .3s ease;max-width:280px;cursor:pointer;backdrop-filter:blur(8px);}
+.toast.long{border-color:var(–green);background:rgba(46,125,82,.08);color:var(–green);}
+.toast.short{border-color:var(–red);background:rgba(192,57,43,.08);color:var(–red);}
+.toast.sweep{border-color:var(–orange);background:rgba(192,98,26,.08);color:var(–orange);}
+@keyframes tIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-    /* Тёмный фильтр поверх OSM тайлов — сохраняет контуры, но делает тёмным */
-    .leaflet-tile-pane {
-      filter: brightness(0.3) saturate(0.5) hue-rotate(190deg) contrast(1.1);
-    }
-
-    .leaflet-popup-content-wrapper {
-      background:#0f2040; border:1px solid var(--border); border-radius:8px;
-      color:var(--text); box-shadow:0 8px 30px rgba(0,0,0,.6); max-width:230px;
-    }
-    .leaflet-popup-tip { background:#0f2040; }
-    .leaflet-popup-content { font-family:inherit; font-size:.8rem; line-height:1.55; }
-    .popup-emoji { font-size:1.8rem; display:block; margin-bottom:4px; }
-    .popup-title { font-size:.9rem; font-weight:bold; color:var(--gold); margin-bottom:5px; }
-    .leaflet-popup-close-button { color:var(--muted) !important; }
-
-    .marker-label {
-      background: rgba(8,18,36,.88) !important;
-      border: 1px solid rgba(96,165,250,.3) !important;
-      border-radius: 5px !important;
-      color: #cbd5e1 !important;
-      font-family: Georgia,serif !important;
-      font-size: 11.5px !important;
-      line-height: 1.35 !important;
-      padding: 3px 8px !important;
-      white-space: nowrap !important;
-      pointer-events: none !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,.55) !important;
-    }
-    .marker-label::before { display:none !important; }
-    .marker-label.active-label {
-      border-color: rgba(59,130,246,.75) !important;
-      color: #bfdbfe !important;
-      background: rgba(15,32,64,.95) !important;
-    }
-
-    .leaflet-control-attribution {
-      background:rgba(7,17,31,.8) !important;
-      color:var(--muted) !important;
-      font-size:9px !important;
-    }
-    .leaflet-control-attribution a { color:var(--muted) !important; }
-
-    @media(max-width:640px){
-      :root{--panel-w:100%;}
-      .main{flex-direction:column;}
-      /* Сайдбар занимает только треть экрана */
-      #sidebar{
-        width:100%; min-width:100%;
-        height:38vh; max-height:38vh;
-        border-right:none; border-bottom:1px solid var(--border);
-        flex-shrink:0;
-      }
-      #sight-wrap{ flex:1; min-height:0; }
-      #route-section{ max-height:30%; }
-      /* Карта занимает остаток — 100vh минус header минус sidebar */
-      #map{ flex:1; min-height:0; }
-      header{ padding:10px 14px; }
-      .header-text h1{ font-size:.92rem; }
-      .header-badge{ display:none; }
-    }
-  </style>
+@media(max-width:600px){
+.d-grid.g4{grid-template-columns:repeat(2,1fr);}
+.d-grid.g3{grid-template-columns:repeat(2,1fr);}
+.trade-grid{grid-template-columns:repeat(2,1fr);}
+.trade-box.entry{grid-column:1/-1;}
+#statsBar{grid-template-columns:repeat(2,1fr);}
+.scanner-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
 
 </head>
 <body>
+<div class="bg-fx"><div class="bg-grid"></div><div class="bg-g1"></div><div class="bg-g2"></div><div class="scanline"></div></div>
+<div class="wrap">
 
 <header>
-  <div class="header-text">
-    <h1>Карта достопримечательностей Туркменистана</h1>
-    <p>Выбирай места — и смотри маршрут</p>
+  <div>
+    <div class="logo">SMC TERMINAL</div>
+    <div class="logo-sub">SMART MONEY CONCEPTS · ORDER BLOCKS · FVG · LIQUIDITY SWEEP</div>
   </div>
-  <div class="header-badge">🇹🇲 Туркменистан</div>
+  <div class="hdr-right">
+    <span style="font-size:10px;color:var(--text2)" id="clock">--:--:--</span>
+    <div class="live-badge"><div class="pdot"></div>BINANCE LIVE</div>
+  </div>
 </header>
 
-<div class="main">
-  <aside id="sidebar">
-    <div class="sidebar-section" style="flex-shrink:0"><div class="sidebar-label">Достопримечательности</div></div>
-    <div id="sight-wrap">
-      <ul id="sight-list"></ul>
+<div id="btcBar">
+  <span style="font-size:9px;letter-spacing:2px;color:var(--text2)">BTC</span>
+  <span style="font-size:15px;font-weight:700;color:var(--accent)" id="btcPrice">—</span>
+  <span class="btc-tag neut" id="btcTag">...</span>
+  <span style="font-size:9px;color:var(--text2)" id="btcSMC">CHoCH: — | BOS: — | OB: —</span>
+  <span style="font-size:9px;color:var(--text2);margin-left:auto" id="btcDetail">—</span>
+</div>
+
+<div class="controls">
+  <button class="scan-btn" id="scanBtn" onclick="startScan()">⚡&nbsp;&nbsp;СКАНИРОВАТЬ ВСЕ</button>
+  <div class="ctrl-row">
+    <div class="ctrl-group" onclick="document.getElementById('autoScan').click()">
+      <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="autoScan" onchange="toggleAuto()"><span class="toggle-sl"></span></label>
+      <div class="ctrl-label">АВТО<br><select id="autoInterval" onclick="event.stopPropagation()" style="font-size:9px;padding:2px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);margin-top:2px;"><option value="60000">1МИН</option><option value="180000" selected>3МИН</option><option value="300000">5МИН</option><option value="600000">10МИН</option></select></div>
     </div>
-    <div id="route-section">
-      <div class="sidebar-section"><div class="sidebar-label">Выбранный маршрут</div></div>
-      <ul id="route-list" style="overflow-y:auto;flex:1;list-style:none;padding:0 0 4px;"><li id="route-empty">Ничего не выбрано</li></ul>
-      <button class="btn-reset" onclick="resetAll()">✕ Сбросить всё</button>
+    <div class="ctrl-group" onclick="document.getElementById('notifToggle').click()">
+      <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="notifToggle" onchange="toggleNotif()"><span class="toggle-sl"></span></label>
+      <div class="ctrl-label">🔔 АЛЕРТЫ</div>
     </div>
-  </aside>
-  <div id="map"></div>
+    <div class="ctrl-group" onclick="document.getElementById('btcFilter').click()">
+      <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="btcFilter" checked><span class="toggle-sl"></span></label>
+      <div class="ctrl-label">₿ BTC<br>ФИЛЬТР</div>
+    </div>
+  </div>
+</div>
+
+<div id="statsBar">
+  <div class="stat-cell"><div class="stat-label">ПРОСКАНИРОВАНО</div><div class="stat-value sv-g" id="stTotal">—</div></div>
+  <div class="stat-cell"><div class="stat-label">SMC СИГНАЛОВ</div><div class="stat-value sv-o" id="stSignals">—</div></div>
+  <div class="stat-cell"><div class="stat-label">СИЛА СИГНАЛА</div><div class="stat-value sv-p" id="stWinrate">—</div></div>
+  <div class="stat-cell"><div class="stat-label">СРЕДНИЙ R:R</div><div class="stat-value sv-y" id="stRR">—</div></div>
+</div>
+
+<div id="alertLabel" class="sec-label" style="display:none">SMC СИГНАЛЫ</div>
+<div id="alertBox" style="margin-bottom:14px"></div>
+
+<div class="sec-label" id="historyLabel" style="display:none">ИСТОРИЯ СКАНОВ</div>
+<div id="historyBox" style="margin-bottom:14px"></div>
+
+<div id="scanProg">
+  <div class="prog-label" id="progLabel">СКАНИРОВАНИЕ...</div>
+  <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="prog-coins" id="progCoins"></div>
+</div>
+
+<div id="detailPanel"></div>
+
+<div class="sec-label">ВСЕ МОНЕТЫ</div>
+<div class="scanner-grid" id="scannerGrid"></div>
+
+<footer style="margin-top:30px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:9px;letter-spacing:2px;color:var(--text2);flex-wrap:wrap;gap:6px;">
+  <span>BINANCE API · SMC ENGINE</span>
+  <span>OB · FVG · SWEEP · CHoCH · BOS</span>
+</footer>
 </div>
 
 <script>
-const REGIONS = [
-  {
-    name: 'Ашхабад',
-    sights: [
-      { name:'Монумент Нейтралитета',             emoji:'🗽', coords:[37.9607,58.3261], desc:'Символ нейтралитета Туркменистана, 75-метровый монумент с вращающейся фигурой Туркменбаши на вершине.' },
-      { name:'Монумент Независимости',            emoji:'🏛️', coords:[37.9450,58.3900], desc:'Величественный монумент в честь независимости Туркменистана, окружён фонтанами и парком.' },
-      { name:'Алем',                              emoji:'🎡', coords:[37.9550,58.3450], desc:'Крытый колесо обозрения в здании — самое большое закрытое колесо обозрения в мире.' },
-      { name:'Национальный музей Туркменистана',  emoji:'🏺', coords:[37.9480,58.3870], desc:'Крупнейший музей страны с богатой коллекцией артефактов от древности до наших дней.' },
-      { name:'Дворец бракосочетаний Багт кошги',  emoji:'💒', coords:[37.9620,58.4010], desc:'Дворец в форме восьмиконечной звезды — один из самых необычных свадебных дворцов в мире.' },
-      { name:'Мечеть Эртогрул Газы',              emoji:'🕌', coords:[37.9580,58.3390], desc:'Красивая мечеть в османском стиле, подарок Турции туркменскому народу.' },
-      { name:'Парк Ашхабад',                      emoji:'🌳', coords:[37.9700,58.3600], desc:'Большой городской парк с аттракционами, фонтанами и зонами отдыха.' },
-      { name:'Ниса',                              emoji:'🏯', coords:[37.9667,58.1950], desc:'Столица Парфянского царства, объект ЮНЕСКО — руины древней крепости I в. до н.э.' },
-    ]
-  },
-  {
-    name: 'Ахалский велаят',
-    sights: [
-      { name:'Дарваза (Врата ада)',               emoji:'🔥', coords:[40.2525,58.4396], desc:'Кратер горящего природного газа в пустыне Каракумы, горит с 1971 года.' },
-      { name:'Подземное озеро Ков-Ата',           emoji:'💧', coords:[38.2180,57.8520], desc:'Уникальное подземное серное озеро в пещере, популярное место для купания.' },
-      { name:'Мечеть Туркменбаши Рухы',           emoji:'🕌', coords:[38.0178,58.2528], desc:'Одна из крупнейших мечетей Центральной Азии, вмещает до 10 000 человек.' },
-      { name:'Конный комплекс Ахалтекинец',       emoji:'🐎', coords:[37.9900,58.4200], desc:'Комплекс, посвящённый легендарной породе ахалтекинских лошадей — национального символа Туркменистана.' },
-    ]
-  },
-  {
-    name: 'Марыйский велаят',
-    sights: [
-      { name:'Древний Мерв',                      emoji:'🏛️', coords:[37.6628,62.1925], desc:'Один из древнейших городов мира на Великом шёлковом пути, объект ЮНЕСКО.' },
-      { name:'Мавзолей Султана Санджара',         emoji:'🕌', coords:[37.6650,62.1870], desc:'Величественный мавзолей XII века — жемчужина сельджукской архитектуры, объект ЮНЕСКО.' },
-      { name:'Гяур-Кала',                         emoji:'🏚️', coords:[37.6900,62.1500], desc:'Руины древнего парфянского города, входят в комплекс Древнего Мерва.' },
-    ]
-  },
-  {
-    name: 'Балканский велаят',
-    sights: [
-      { name:'Янгыкала',                          emoji:'🏜️', coords:[40.6322,54.9267], desc:'Цветные каньоны и скалы — «огненная крепость» Туркменистана, поражающая закатными красками.' },
-      { name:'Каньон Янгысув',                    emoji:'🌊', coords:[40.5500,54.8000], desc:'Живописный каньон с рекой среди красных скал Балканского велаята.' },
-      { name:'Аваза',                             emoji:'🏖️', coords:[40.0167,52.9833], desc:'Национальная туристическая зона на берегу Каспийского моря с современными отелями.' },
-      { name:'Гозли-Ата',                         emoji:'⛪', coords:[40.1500,54.2000], desc:'Средневековый некрополь с мавзолеями, священное место паломничества туркменского народа.' },
-    ]
-  },
-  {
-    name: 'Дашогузский велаят',
-    sights: [
-      { name:'Куня-Ургенч',                       emoji:'🕌', coords:[42.3277,59.1544], desc:'Руины древней столицы Хорезма с мавзолеями и минаретом XI–XIV вв., объект ЮНЕСКО.' },
-      { name:'Минарет Кутлуг-Тимура',             emoji:'🗼', coords:[42.3220,59.1530], desc:'Самый высокий средневековый минарет Центральной Азии (60 м), XIV век.' },
-      { name:'Мавзолей Тюрабек-ханым',            emoji:'🏛️', coords:[42.3240,59.1490], desc:'Шедевр средневековой архитектуры XIV века с уникальной мозаичной отделкой купола.' },
-    ]
-  },
-  {
-    name: 'Лебапский велаят',
-    sights: [
-      { name:'Древний Амуль',                     emoji:'🏛️', coords:[39.1000,63.5500], desc:'Руины одного из древнейших городов Средней Азии на берегу Амударьи.' },
-      { name:'Пещера Койтендаг',                  emoji:'🦇', coords:[37.7500,66.5000], desc:'Карстовая пещера с подземными озёрами и уникальными сталактитами в горах Койтендага.' },
-      { name:'Плато динозавров Койтендаг',        emoji:'🦕', coords:[37.8000,66.4500], desc:'Плато с сотнями отпечатков следов динозавров юрского периода — уникальный природный памятник.' },
-    ]
-  },
+// ════════════════════════════════════════════
+//  МОНЕТЫ
+// ════════════════════════════════════════════
+const COINS=[
+  'BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','BNBUSDT','DOGEUSDT',
+  'AVAXUSDT','ADAUSDT','DOTUSDT','LINKUSDT','LTCUSDT','TRXUSDT',
+  'UNIUSDT','ATOMUSDT','NEARUSDT','APTUSDT','ARBUSDT','OPUSDT',
+  'INJUSDT','SUIUSDT','AAVEUSDT','LDOUSDT','PENDLEUSDT','WLDUSDT',
+  'RENDERUSDT','JUPUSDT','FILUSDT','TAOUSDT','TONUSDT',
+  'HBARUSDT','BCHUSDT','XLMUSDT','VETUSDT','ICPUSDT',
+  'KASUSDT','MATICUSDT','FETUSDT','IMXUSDT',
 ];
 
-// Разворачиваем в плоский массив с глобальными id
-const SIGHTS = [];
-REGIONS.forEach(region => {
-  region.sights.forEach(s => {
-    SIGHTS.push({ id: SIGHTS.length, region: region.name, ...s });
-  });
-});
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let autoTimer=null, notifEnabled=false, lastAlerts={};
+let btcContext={dir:'neut', ob:null, fvg:null, choch:false, bos:false};
 
-let selectedOrder = [];
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('ru-RU');},1000);
 
-// ── Карта с тайлами OpenStreetMap ──
-// Границы Туркменистана с небольшим отступом
-const TKM_BOUNDS = L.latLngBounds(
-  [33.0, 49.5],   // юго-запад с запасом
-  [44.5, 69.5]    // северо-восток с запасом
-);
-
-const map = L.map('map', {
-  center: [39.2, 59.5],
-  zoom: 5,
-  minZoom: 5,
-  maxZoom: 13,
-  zoomControl: true,
-  maxBounds: TKM_BOUNDS,
-  maxBoundsViscosity: 0.8
-});
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  maxZoom: 19,
-  subdomains: ['a','b','c']
-}).addTo(map);
-
-// ── ICON FACTORY ──
-function makeIcon(sight, isActive, orderNum) {
-  const size = 36;
-  const bg  = isActive ? '#2563eb' : '#d97706';
-  const bdr = isActive ? '#1d4ed8' : '#92400e';
-  const inner = isActive
-    ? `<span style="transform:rotate(45deg);font-size:12px;color:#fff;font-weight:bold;font-family:monospace;">${orderNum}</span>`
-    : `<span style="transform:rotate(45deg);font-size:17px;line-height:1;">${sight.emoji}</span>`;
-  return L.divIcon({
-    html:`<div style="width:${size}px;height:${size}px;background:${bg};border:2px solid ${bdr};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.6);">${inner}</div>`,
-    className:'',
-    iconSize:[size,size],
-    iconAnchor:[size/2,size],
-    popupAnchor:[0,-size-4]
-  });
-}
-
-// ── POLYLINE ──
-let routeLine = null;
-function updatePolyline() {
-  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-  if (selectedOrder.length < 2) return;
-  routeLine = L.polyline(selectedOrder.map(id => SIGHTS[id].coords), {
-    color:'#e63939', weight:4, dashArray:'8,12', opacity:.9
-  }).addTo(map);
-}
-
-// ── MARKERS + LABELS ──
-const markers = {};
-const labelTooltips = {};
-
-SIGHTS.forEach(sight => {
-  const m = L.marker(sight.coords, { icon: makeIcon(sight,false,0) })
-    .addTo(map)
-    .bindPopup(
-      `<span class="popup-emoji">${sight.emoji}</span><div class="popup-title">${sight.name}</div><div>${sight.desc}</div>`,
-      { maxWidth:225 }
-    );
-  m.on('click', () => toggleSight(sight.id));
-  markers[sight.id] = m;
-
-  const tip = L.tooltip({
-    permanent:true, direction:'right', offset:[14,-20],
-    className:'marker-label', interactive:false
-  })
-    .setContent(`${sight.emoji}&nbsp;${sight.name}`)
-    .setLatLng(sight.coords);
-  map.addLayer(tip);
-  labelTooltips[sight.id] = tip;
-});
-
-// ── SIDEBAR — с заголовками регионов ──
-const sightListEl = document.getElementById('sight-list');
-REGIONS.forEach(region => {
-  // Заголовок региона
-  const hdr = document.createElement('li');
-  hdr.className = 'region-header';
-  hdr.textContent = region.name;
-  hdr.style.cssText = 'padding:7px 14px 5px;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);background:var(--panel2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);pointer-events:none;list-style:none;';
-  sightListEl.appendChild(hdr);
-
-  region.sights.forEach(sight => {
-    const fullSight = SIGHTS.find(s => s.name === sight.name && s.region === region.name);
-    const li = document.createElement('li');
-    li.id = `sl-${fullSight.id}`;
-    li.innerHTML = `<span class="sight-emoji">${fullSight.emoji}</span><span class="sight-dot" id="dot-${fullSight.id}"></span><span>${fullSight.name}</span>`;
-    li.addEventListener('click', () => toggleSight(fullSight.id));
-    sightListEl.appendChild(li);
-  });
-});
-
-// ── ROUTE LIST ──
-function renderRouteList() {
-  const ul = document.getElementById('route-list');
-  const empty = document.getElementById('route-empty');
-  Array.from(ul.children).forEach(c => { if (c.id !== 'route-empty') ul.removeChild(c); });
-  if (!selectedOrder.length) { empty.style.display = ''; return; }
-  empty.style.display = 'none';
-  selectedOrder.forEach((id, idx) => {
-    const s = SIGHTS[id];
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="route-idx">${idx+1}.</span><span style="font-size:.95rem">${s.emoji}</span><span class="route-name">${s.name}</span><span class="route-remove" title="Убрать">✕</span>`;
-    li.querySelector('.route-remove').addEventListener('click', e => { e.stopPropagation(); toggleSight(id); });
-    ul.appendChild(li);
-  });
-}
-
-// ── TOGGLE / REFRESH / RESET ──
-function toggleSight(id) {
-  const idx = selectedOrder.indexOf(id);
-  if (idx === -1) {
-    selectedOrder.push(id);
-    markers[id].openPopup();
-    map.panTo(SIGHTS[id].coords, { animate:true, duration:.5 });
-  } else {
-    selectedOrder.splice(idx, 1);
-    markers[id].closePopup();
+// ════════════════════════════════════════════
+//  BINANCE API
+// ════════════════════════════════════════════
+const HOSTS=['https://api.binance.com','https://data.binance.com','https://api1.binance.com'];
+async function fetchCandles(symbol,interval,limit=300){
+  const path=`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+  let err;
+  for(const h of HOSTS){
+    try{
+      const r=await fetch(h+path);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!Array.isArray(d)||!d.length)throw new Error('empty');
+      return d.map(c=>({open:+c[1],high:+c[2],low:+c[3],close:+c[4],volume:+c[5]}));
+    }catch(e){err=e;}
   }
-  refreshUI();
+  throw new Error('Binance: '+err.message);
 }
 
-function refreshUI() {
-  SIGHTS.forEach(sight => {
-    const oi = selectedOrder.indexOf(sight.id);
-    const isActive = oi !== -1;
-    markers[sight.id].setIcon(makeIcon(sight, isActive, oi+1));
-    const tipEl = labelTooltips[sight.id]?.getElement?.();
-    if (tipEl) tipEl.classList.toggle('active-label', isActive);
-    const li = document.getElementById(`sl-${sight.id}`);
-    if (isActive) {
-      li.classList.add('active');
-      const dot = li.querySelector('.sight-dot');
-      if (dot) {
-        const num = Object.assign(document.createElement('span'), { className:'sight-num', id:`dot-${sight.id}`, textContent:oi+1 });
-        li.replaceChild(num, dot);
-      } else {
-        const n = document.getElementById(`dot-${sight.id}`);
-        if (n) n.textContent = oi+1;
-      }
-    } else {
-      li.classList.remove('active');
-      const num = document.getElementById(`dot-${sight.id}`);
-      if (num?.classList.contains('sight-num')) {
-        const dot = Object.assign(document.createElement('span'), { className:'sight-dot', id:`dot-${sight.id}` });
-        li.replaceChild(dot, num);
+// ════════════════════════════════════════════
+//  CACHE свечей (Fix 8: не дёргать API повторно в том же скане)
+// ════════════════════════════════════════════
+const _candleCache={};
+async function fetchCandlesCached(symbol,interval,limit=300){
+  const key=`${symbol}_${interval}_${limit}`;
+  if(_candleCache[key])return _candleCache[key];
+  const data=await fetchCandles(symbol,interval,limit);
+  _candleCache[key]=data;
+  return data;
+}
+function clearCandleCache(){Object.keys(_candleCache).forEach(k=>delete _candleCache[k]);}
+// Returns full EMA array; use calcEMALast() for a single value
+function calcEMA(cl,p){
+  const k=2/(p+1);const out=new Array(cl.length);out[0]=cl[0];
+  for(let i=1;i<cl.length;i++)out[i]=cl[i]*k+out[i-1]*(1-k);
+  return out;
+}
+function calcEMALast(cl,p){return calcEMA(cl,p).at(-1);}
+function calcATR(c,p=14){
+  if(c.length<2)return 0;
+  const trs=[];
+  for(let i=1;i<c.length;i++)trs.push(Math.max(c[i].high-c[i].low,Math.abs(c[i].high-c[i-1].close),Math.abs(c[i].low-c[i-1].close)));
+  const sl=trs.slice(-p);
+  return sl.reduce((a,b)=>a+b,0)/sl.length;
+}
+function calcRSI(cl,p=14){
+  let g=0,l=0;
+  for(let i=1;i<=p;i++){const d=cl[i]-cl[i-1];d>0?g+=d:l-=d;}
+  let ag=g/p,al=l/p;
+  for(let i=p+1;i<cl.length;i++){const d=cl[i]-cl[i-1];ag=(ag*(p-1)+Math.max(d,0))/p;al=(al*(p-1)+Math.max(-d,0))/p;}
+  return al===0?100:+(100-100/(1+ag/al)).toFixed(2);
+}
+
+// ════════════════════════════════════════════
+//  SMC ENGINE
+// ════════════════════════════════════════════
+
+function findOrderBlocks(candles){
+  const obs=[];
+  const c=candles;
+  for(let i=2;i<c.length-3;i++){
+    // Бычий OB: медвежья свеча, после неё 3 бычьих с ростом > 0.3% каждая
+    if(c[i].close < c[i].open){
+      const impulse = c.slice(i+1,i+4);
+      const strongUp = impulse.filter(x=>x.close>x.open&&(x.close-x.open)/x.open>0.003).length;
+      if(strongUp>=2){
+        obs.push({
+          type:'bull',
+          high:c[i].high, low:c[i].low,
+          open:c[i].open, close:c[i].close,
+          idx:i,
+          midpoint:(c[i].high+c[i].low)/2,
+          fresh:true
+        });
       }
     }
+    // Медвежий OB: бычья свеча, после неё 3 медвежьих
+    if(c[i].close > c[i].open){
+      const impulse = c.slice(i+1,i+4);
+      const strongDown = impulse.filter(x=>x.close<x.open&&(x.open-x.close)/x.open>0.003).length;
+      if(strongDown>=2){
+        obs.push({
+          type:'bear',
+          high:c[i].high, low:c[i].low,
+          open:c[i].open, close:c[i].close,
+          idx:i,
+          midpoint:(c[i].high+c[i].low)/2,
+          fresh:true
+        });
+      }
+    }
+  }
+  // Помечаем использованные OB: свежий только если цена НЕ закрылась за противоположный край зоны
+  obs.forEach(ob=>{
+    const laterCandles = c.slice(ob.idx+4);
+    const mitigated = laterCandles.some(x=>{
+      if(ob.type==='bull') return x.close < ob.low;   // цена закрылась ниже низа OB — зона сломана
+      else                  return x.close > ob.high; // цена закрылась выше верха OB — зона сломана
+    });
+    ob.fresh = !mitigated;
   });
-  updatePolyline();
-  renderRouteList();
+  return obs.slice(-20);
 }
 
-function resetAll() { selectedOrder = []; map.closePopup(); refreshUI(); }
+// ── 2. FAIR VALUE GAPS ──
+// FVG = разрыв между свечой 1 и свечой 3 (они не перекрываются)
+// Бычий FVG: high[i-1] < low[i+1] — гэп вверх
+// Медвежий FVG: low[i-1] > high[i+1] — гэп вниз
+function findFVG(candles){
+  const fvgs=[];
+  for(let i=1;i<candles.length-1;i++){
+    const prev=candles[i-1], curr=candles[i], next=candles[i+1];
+    // Бычий FVG
+    if(prev.high < next.low){
+      fvgs.push({
+        type:'bull',
+        top:next.low, bottom:prev.high,
+        mid:(next.low+prev.high)/2,
+        size:next.low-prev.high,
+        idx:i
+      });
+    }
+    // Медвежий FVG
+    if(prev.low > next.high){
+      fvgs.push({
+        type:'bear',
+        top:prev.low, bottom:next.high,
+        mid:(prev.low+next.high)/2,
+        size:prev.low-next.high,
+        idx:i
+      });
+    }
+  }
+  // Отмечаем заполненные (цена вернулась в зону)
+  fvgs.forEach(fvg=>{
+    const later=candles.slice(fvg.idx+2);
+    fvg.filled=later.some(c=>
+      fvg.type==='bull' ? c.low<=fvg.mid : c.high>=fvg.mid
+    );
+  });
+  // Только незаполненные и достаточно большие (>0.1% от цены)
+  const price=candles[candles.length-1].close;
+  return fvgs.filter(f=>!f.filled&&f.size/price>0.001).slice(-15);
+}
 
-refreshUI();
+function findLiquiditySweep(candles){
+  const c=candles;
+  const price=c[c.length-1].close;
+  const atr=calcATR(c.slice(-20),14);
+  const tol=atr*0.5;
+
+  const sweeps=[];
+
+  // Equal highs: выбили хаи и упали (медвежья ловушка)
+  for(let i=5;i<c.length-3;i++){
+    if(c[i].high > c[i-1].high && c[i].high > c[i+1].high){
+      for(let j=i-10;j<i-1;j++){
+        if(j<0)continue;
+        if(Math.abs(c[j].high-c[i].high)<tol){
+          const afterSweep=c.slice(i+1);
+          // Требуем минимум 2 свечи подтверждения разворота вниз
+          const confirmed=afterSweep.length>=2&&
+            afterSweep[0].close<c[i].high&&
+            afterSweep[1].close<afterSweep[0].close;
+          if(confirmed){
+            sweeps.push({
+              type:'bear',
+              level:c[i].high,
+              sweptIdx:i,
+              age:c.length-1-i,
+              fresh:c.length-1-i<=3
+            });
+          }
+          break;
+        }
+      }
+    }
+    // Equal lows: выбили лои и развернулись вверх (бычья ловушка)
+    if(c[i].low < c[i-1].low && c[i].low < c[i+1].low){
+      for(let j=i-10;j<i-1;j++){
+        if(j<0)continue;
+        if(Math.abs(c[j].low-c[i].low)<tol){
+          const afterSweep=c.slice(i+1);
+          const confirmed=afterSweep.length>=2&&
+            afterSweep[0].close>c[i].low&&
+            afterSweep[1].close>afterSweep[0].close;
+          if(confirmed){
+            sweeps.push({
+              type:'bull',
+              level:c[i].low,
+              sweptIdx:i,
+              age:c.length-1-i,
+              fresh:c.length-1-i<=3
+            });
+          }
+          break;
+        }
+      }
+    }
+  }
+  return sweeps.slice(-10);
+}
+
+// ── 4. CHoCH и BOS ──
+// CHoCH (Change of Character) = первый признак смены тренда (слабый пробой)
+// BOS (Break of Structure) = подтверждение нового тренда (сильный пробой с объёмом)
+function findStructureBreaks(candles){
+  const c=candles.slice(-50);
+  const price=c[c.length-1].close;
+
+  const swingHighs=[], swingLows=[];
+  for(let i=2;i<c.length-2;i++){
+    if(c[i].high>c[i-1].high&&c[i].high>c[i-2].high&&c[i].high>c[i+1].high&&c[i].high>c[i+2].high)
+      swingHighs.push({price:c[i].high,idx:i,vol:c[i].volume});
+    if(c[i].low<c[i-1].low&&c[i].low<c[i-2].low&&c[i].low<c[i+1].low&&c[i].low<c[i+2].low)
+      swingLows.push({price:c[i].low,idx:i,vol:c[i].volume});
+  }
+
+  // Отдельные переменные для бычьих и медвежьих событий — не перезаписываем друг друга
+  let bosBull=null, bosBear=null, chochBull=null, chochBear=null;
+  const last=c[c.length-1];
+  const avgVol=c.slice(-20).reduce((s,x)=>s+x.volume,0)/20;
+
+  if(swingHighs.length>=2){
+    const lastHigh=swingHighs[swingHighs.length-1];
+    if(price>lastHigh.price && last.volume>avgVol*1.3){
+      bosBull={dir:'bull', level:lastHigh.price, confirmed:true};
+    } else if(price>lastHigh.price){
+      chochBull={dir:'bull', level:lastHigh.price, confirmed:false};
+    }
+  }
+
+  if(swingLows.length>=2){
+    const lastLow=swingLows[swingLows.length-1];
+    if(price<lastLow.price && last.volume>avgVol*1.3){
+      bosBear={dir:'bear', level:lastLow.price, confirmed:true};
+    } else if(price<lastLow.price){
+      chochBear={dir:'bear', level:lastLow.price, confirmed:false};
+    }
+  }
+
+  // Публичные поля: bos = наиболее значимый (предпочитаем подтверждённый)
+  const bos = bosBull||bosBear||null;
+  const choch = chochBull||chochBear||null;
+
+  let structTrend='neut';
+  if(swingHighs.length>=2&&swingLows.length>=2){
+    const hhBull=swingHighs[swingHighs.length-1].price>swingHighs[swingHighs.length-2].price;
+    const hlBull=swingLows[swingLows.length-1].price>swingLows[swingLows.length-2].price;
+    if(hhBull&&hlBull)structTrend='bull';
+    else if(!hhBull&&!hlBull)structTrend='bear';
+  }
+
+  return{bos, bosBull, bosBear, choch, chochBull, chochBear, structTrend, swingHighs, swingLows};
+}
+
+// ── 5. PREMIUM / DISCOUNT ZONES ──
+// Цена в Premium зоне (выше 50% диапазона) = дорого для покупки
+// Цена в Discount зоне (ниже 50%) = дёшево для покупки
+function calcPDZone(candles){
+  const highs=candles.slice(-50).map(c=>c.high);
+  const lows=candles.slice(-50).map(c=>c.low);
+  const rangeHigh=Math.max(...highs);
+  const rangeLow=Math.min(...lows);
+  const eq=(rangeHigh+rangeLow)/2; // 50% — equilibrium
+  const price=candles[candles.length-1].close;
+  const pct=((price-rangeLow)/(rangeHigh-rangeLow)*100).toFixed(1);
+  const zone=price>eq?'premium':'discount';
+  return{zone, pct:+pct, rangeHigh, rangeLow, eq};
+}
+
+// ════════════════════════════════════════════
+//  ГЛАВНЫЙ SMC АНАЛИЗ
+// ════════════════════════════════════════════
+async function smcAnalysis(symbol){
+  const[c1h,c4h,c1d]=await Promise.all([
+    fetchCandlesCached(symbol,'1h',300),
+    fetchCandlesCached(symbol,'4h',200),
+    fetchCandlesCached(symbol,'1d',100)
+  ]);
+
+  const price=c1h[c1h.length-1].close;
+  const atr=calcATR(c1h.slice(-14),14);
+  const cl1=c1h.map(c=>c.close);
+  const cl4=c4h.map(c=>c.close);
+  const cld=c1d.map(c=>c.close);
+
+  // SMC компоненты на разных ТФ
+  const ob1h=findOrderBlocks(c1h);
+  const ob4h=findOrderBlocks(c4h);
+  const fvg1h=findFVG(c1h);
+  const fvg4h=findFVG(c4h);
+  const sweep1h=findLiquiditySweep(c1h);
+  const sweep4h=findLiquiditySweep(c4h); // Fix 7: теперь sweep анализируется и на 4h
+  const struct1h=findStructureBreaks(c1h);
+  const struct4h=findStructureBreaks(c4h);
+  const structD=findStructureBreaks(c1d);
+  const pd1h=calcPDZone(c1h);
+  const pd4h=calcPDZone(c4h);
+
+  // Fix 2: используем calcEMALast для одного значения
+  const e50=calcEMALast(cl1,50), e200=calcEMALast(cl1,200);
+  const e50_d=calcEMALast(cld,50), e200_d=calcEMALast(cld,200);
+  const rsi1=calcRSI(cl1);
+
+  // ══ SMC SCORING ══
+  let bullScore=0, bearScore=0;
+  const reasons={bull:[], bear:[]};
+
+  // 1. Order Blocks — цена входит в бычий OB = сигнал лонг
+  const bullOBs = ob1h.filter(ob=>ob.type==='bull'&&ob.fresh&&price>=ob.low&&price<=ob.high*1.01);
+  const bearOBs = ob1h.filter(ob=>ob.type==='bear'&&ob.fresh&&price<=ob.high&&price>=ob.low*0.99);
+  const bullOB4h= ob4h.filter(ob=>ob.type==='bull'&&ob.fresh&&price>=ob.low*0.99&&price<=ob.high*1.02);
+  const bearOB4h= ob4h.filter(ob=>ob.type==='bear'&&ob.fresh&&price<=ob.high*1.01&&price>=ob.low*0.98);
+
+  if(bullOBs.length){bullScore+=3;reasons.bull.push(`🟩 OB бычий 1H ($${fmt(bullOBs[0].low)}-$${fmt(bullOBs[0].high)})`);}
+  if(bearOBs.length){bearScore+=3;reasons.bear.push(`🟥 OB медвежий 1H ($${fmt(bearOBs[0].low)}-$${fmt(bearOBs[0].high)})`);}
+  if(bullOB4h.length){bullScore+=2;reasons.bull.push(`🟩 OB бычий 4H (сильный)`);}
+  if(bearOB4h.length){bearScore+=2;reasons.bear.push(`🟥 OB медвежий 4H (сильный)`);}
+
+  // 2. FVG — цена приближается к незаполненному FVG
+  const bullFVGs=fvg1h.filter(f=>f.type==='bull'&&price>=f.bottom*0.999&&price<=f.top*1.005);
+  const bearFVGs=fvg1h.filter(f=>f.type==='bear'&&price<=f.top*1.001&&price>=f.bottom*0.995);
+  const bullFVG4h=fvg4h.filter(f=>f.type==='bull'&&price>=f.bottom*0.998&&price<=f.top*1.01);
+  const bearFVG4h=fvg4h.filter(f=>f.type==='bear'&&price<=f.top*1.002&&price>=f.bottom*0.99);
+
+  if(bullFVGs.length){bullScore+=2;reasons.bull.push(`📊 FVG бычий 1H ($${fmt(bullFVGs[0].bottom)}-$${fmt(bullFVGs[0].top)})`);}
+  if(bearFVGs.length){bearScore+=2;reasons.bear.push(`📊 FVG медвежий 1H ($${fmt(bearFVGs[0].bottom)}-$${fmt(bearFVGs[0].top)})`);}
+  if(bullFVG4h.length){bullScore+=2;reasons.bull.push(`📊 FVG бычий 4H`);}
+  if(bearFVG4h.length){bearScore+=2;reasons.bear.push(`📊 FVG медвежий 4H`);}
+
+  // 3. Liquidity Sweep — самый сильный сигнал
+  const freshBullSweep=sweep1h.filter(s=>s.type==='bull'&&s.fresh);
+  const freshBearSweep=sweep1h.filter(s=>s.type==='bear'&&s.fresh);
+  const recentBullSweep=sweep1h.filter(s=>s.type==='bull'&&s.age<=5);
+  const recentBearSweep=sweep1h.filter(s=>s.type==='bear'&&s.age<=5);
+
+  if(freshBullSweep.length){bullScore+=4;reasons.bull.push(`⚡ SWEEP низов (выбили стопы медведей) — лучший вход!`);}
+  else if(recentBullSweep.length){bullScore+=2;reasons.bull.push(`⚡ Недавний sweep низов`);}
+  if(freshBearSweep.length){bearScore+=4;reasons.bear.push(`⚡ SWEEP верхов (выбили стопы быков) — лучший вход!`);}
+  else if(recentBearSweep.length){bearScore+=2;reasons.bear.push(`⚡ Недавний sweep верхов`);}
+
+  // Fix 3: используем раздельные bosBull/bosBear чтобы не терять сигналы
+  if(struct1h.bosBull?.dir==='bull'){bullScore+=3;reasons.bull.push(`✅ BOS вверх 1H (подтверждён объёмом)`);}
+  if(struct1h.bosBear?.dir==='bear'){bearScore+=3;reasons.bear.push(`✅ BOS вниз 1H (подтверждён объёмом)`);}
+  if(struct1h.chochBull?.dir==='bull'){bullScore+=2;reasons.bull.push(`🔄 CHoCH вверх 1H (смена характера)`);}
+  if(struct1h.chochBear?.dir==='bear'){bearScore+=2;reasons.bear.push(`🔄 CHoCH вниз 1H (смена характера)`);}
+  if(struct4h.bosBull?.dir==='bull'){bullScore+=2;reasons.bull.push(`✅ BOS вверх 4H`);}
+  if(struct4h.bosBear?.dir==='bear'){bearScore+=2;reasons.bear.push(`✅ BOS вниз 4H`);}
+  if(structD.structTrend==='bull'){bullScore+=2;reasons.bull.push(`📈 Daily структура бычья (HH/HL)`);}
+  if(structD.structTrend==='bear'){bearScore+=2;reasons.bear.push(`📉 Daily структура медвежья (LH/LL)`);}
+
+  // Fix 7: Sweep на 4H — более сильное подтверждение
+  const freshBullSweep4h=sweep4h.filter(s=>s.type==='bull'&&s.fresh);
+  const freshBearSweep4h=sweep4h.filter(s=>s.type==='bear'&&s.fresh);
+  if(freshBullSweep4h.length){bullScore+=3;reasons.bull.push(`⚡ SWEEP 4H низов — сильное подтверждение!`);}
+  if(freshBearSweep4h.length){bearScore+=3;reasons.bear.push(`⚡ SWEEP 4H верхов — сильное подтверждение!`);}
+
+  // 5. Premium / Discount
+  if(pd4h.zone==='discount'&&pd4h.pct<35){bullScore+=2;reasons.bull.push(`💚 Discount zone 4H (${pd4h.pct}%) — дёшево`);}
+  if(pd4h.zone==='premium'&&pd4h.pct>65){bearScore+=2;reasons.bear.push(`🔴 Premium zone 4H (${pd4h.pct}%) — дорого`);}
+  if(pd1h.zone==='discount'){bullScore+=1;reasons.bull.push(`Discount 1H`);}
+  if(pd1h.zone==='premium'){bearScore+=1;reasons.bear.push(`Premium 1H`);}
+
+  // 6. BTC контекст
+  const isBTC=symbol==='BTCUSDT';
+  const btcFilterOn=document.getElementById('btcFilter').checked;
+  let btcConflict=false;
+  if(!isBTC&&btcFilterOn){
+    if(btcContext.dir==='bull'){bullScore+=2;reasons.bull.push(`₿ BTC бычий тренд`);}
+    else if(btcContext.dir==='bear'){bearScore+=2;reasons.bear.push(`₿ BTC медвежий тренд`);}
+    // BTC фильтр: не входить против BTC
+    if(bullScore>bearScore&&btcContext.dir==='bear')btcConflict=true;
+    if(bearScore>bullScore&&btcContext.dir==='bull')btcConflict=true;
+  }
+
+  // 7. Daily тренд (жёсткий фильтр)
+  const dailyBull=cld[cld.length-1]>e50_d&&e50_d>e200_d;
+  const dailyBear=cld[cld.length-1]<e50_d&&e50_d<e200_d;
+  if(bullScore>bearScore&&dailyBear){btcConflict=true;reasons.bear.push(`⛔ Daily медвежий — лонги заблокированы`);}
+
+  // ══ НАПРАВЛЕНИЕ ══
+  const diff=bullScore-bearScore;
+  let direction=null;
+  if(diff>=4)direction='long';
+  else if(diff<=-4)direction='short';
+  if(btcConflict)direction=null;
+
+  // Особый случай: свежий sweep = сигнал даже при меньшем diff
+  let isSweepSignal=false;
+  if(!direction&&!btcConflict){
+    if(freshBullSweep.length&&bullScore>=bearScore){direction='long';isSweepSignal=true;}
+    if(freshBearSweep.length&&bearScore>=bullScore){direction='short';isSweepSignal=true;}
+  }
+
+  // ══ СИЛА СИГНАЛА (не статистическая вероятность, а относительная сила) ══
+  const totalScore=bullScore+bearScore||1;
+  const winScore=direction==='long'?bullScore:direction==='short'?bearScore:0;
+  let prob=Math.round((winScore/Math.max(totalScore,1))*100);
+  // Бонус за множественное подтверждение
+  const confirmations=direction==='long'?reasons.bull.length:reasons.bear.length;
+  if(confirmations>=4)prob=Math.min(prob+10,92);
+  if(isSweepSignal)prob=Math.min(prob+8,92);
+  prob=Math.max(prob,10);
+
+  // ══ ENTRY / SL / TP — привязаны к SMC зонам ══
+  let entry,sl,slNote,tp1,tp2,tp3,tp1Note,tp2Note,tp3Note,entryType;
+  const buf=atr*0.15;
+
+  if(direction==='long'){
+    // Entry: внутри бычьего OB или у FVG, иначе рыночный
+    const obEntry=bullOBs[0]||bullOB4h[0];
+    const fvgEntry=bullFVGs[0]||bullFVG4h[0];
+    if(obEntry){
+      entry=+(obEntry.midpoint||price).toFixed(6);
+      entryType=`🟩 Вход в OB ($${fmt(obEntry.low)}-$${fmt(obEntry.high)})`;
+    } else if(fvgEntry){
+      entry=+(fvgEntry.mid||price).toFixed(6);
+      entryType=`📊 Вход в FVG ($${fmt(fvgEntry.bottom)}-$${fmt(fvgEntry.top)})`;
+    } else if(freshBullSweep.length){
+      entry=+(price*1.0003).toFixed(6);
+      entryType=`⚡ Вход после Sweep лоев`;
+    } else {
+      entry=+(price*1.0005).toFixed(6);
+      entryType=`📊 Рыночный`;
+    }
+    // SL: под последним swing low или под OB — берём наиболее близкий разумный уровень
+    const lastSwingLow=struct1h.swingLows?.slice(-1)[0];
+    const slBySwing=lastSwingLow&&lastSwingLow.price<entry?lastSwingLow.price-buf:null;
+    const slByOB=obEntry?obEntry.low-buf:null;
+    // Fix 6: используем только валидные (не null) кандидаты, исключаем 0
+    const slCandidates=[slBySwing, slByOB, entry-atr*2.2].filter(v=>v!==null&&v>0&&v<entry);
+    sl=slCandidates.length?+(Math.max(...slCandidates)).toFixed(6):+(entry-atr*2.2).toFixed(6);
+    // Нижняя граница
+    if(entry-sl>atr*3.5)sl=+(entry-atr*2.5).toFixed(6);
+    slNote=slBySwing?`Swing low $${fmt(lastSwingLow.price)}`:slByOB?`Под OB $${fmt(obEntry.low)}`:`ATR×2.2`;
+
+    // TP: следующий OB медвежий / FVG медвежий / swing high
+    const nextBearOB=ob1h.filter(o=>o.type==='bear'&&o.low>entry).sort((a,b)=>a.low-b.low)[0];
+    const nextBearFVG=fvg1h.filter(f=>f.type==='bear'&&f.bottom>entry).sort((a,b)=>a.bottom-b.bottom)[0];
+    const nextSwingH=struct1h.swingHighs?.filter(s=>s.price>entry).sort((a,b)=>a.price-b.price);
+
+    tp1=nextBearFVG?+(nextBearFVG.bottom-buf).toFixed(6):+(entry+atr*1.5).toFixed(6);
+    tp2=nextBearOB?+(nextBearOB.low-buf).toFixed(6):nextSwingH?.[0]?+(nextSwingH[0].price-buf).toFixed(6):+(entry+atr*3).toFixed(6);
+    tp3=nextSwingH?.[1]?+(nextSwingH[1].price-buf).toFixed(6):+(entry+atr*5).toFixed(6);
+    tp1Note=nextBearFVG?`FVG медв. $${fmt(nextBearFVG.bottom)}`:`ATR×1.5`;
+    tp2Note=nextBearOB?`OB медв. $${fmt(nextBearOB.low)}`:nextSwingH?.[0]?`Swing H $${fmt(nextSwingH[0].price)}`:`ATR×3`;
+    tp3Note=nextSwingH?.[1]?`Swing H $${fmt(nextSwingH[1].price)}`:`ATR×5`;
+
+  } else if(direction==='short'){
+    const obEntry=bearOBs[0]||bearOB4h[0];
+    const fvgEntry=bearFVGs[0]||bearFVG4h[0];
+    if(obEntry){
+      entry=+(obEntry.midpoint||price).toFixed(6);
+      entryType=`🟥 Вход в OB ($${fmt(obEntry.low)}-$${fmt(obEntry.high)})`;
+    } else if(fvgEntry){
+      entry=+(fvgEntry.mid||price).toFixed(6);
+      entryType=`📊 Вход в FVG ($${fmt(fvgEntry.bottom)}-$${fmt(fvgEntry.top)})`;
+    } else if(freshBearSweep.length){
+      entry=+(price*0.9997).toFixed(6);
+      entryType=`⚡ Вход после Sweep хаев`;
+    } else {
+      entry=+(price*0.9995).toFixed(6);
+      entryType=`📊 Рыночный`;
+    }
+    const lastSwingHigh=struct1h.swingHighs?.slice(-1)[0];
+    const slBySwing=lastSwingHigh&&lastSwingHigh.price>entry?lastSwingHigh.price+buf:null;
+    const slByOB=obEntry?obEntry.high+buf:null;
+    // Fix 6: только валидные уровни выше entry
+    const slCandShort=[slBySwing, slByOB, entry+atr*2.2].filter(v=>v!==null&&v>entry);
+    sl=slCandShort.length?+(Math.min(...slCandShort)).toFixed(6):+(entry+atr*2.2).toFixed(6);
+    if(sl-entry>atr*3.5)sl=+(entry+atr*2.5).toFixed(6);
+    slNote=slBySwing?`Swing high $${fmt(lastSwingHigh.price)}`:slByOB?`Над OB $${fmt(obEntry.high)}`:`ATR×2.2`;
+
+    const nextBullOB=ob1h.filter(o=>o.type==='bull'&&o.high<entry).sort((a,b)=>b.high-a.high)[0];
+    const nextBullFVG=fvg1h.filter(f=>f.type==='bull'&&f.top<entry).sort((a,b)=>b.top-a.top)[0];
+    const nextSwingL=struct1h.swingLows?.filter(s=>s.price<entry).sort((a,b)=>b.price-a.price);
+
+    tp1=nextBullFVG?+(nextBullFVG.top+buf).toFixed(6):+(entry-atr*1.5).toFixed(6);
+    tp2=nextBullOB?+(nextBullOB.high+buf).toFixed(6):nextSwingL?.[0]?+(nextSwingL[0].price+buf).toFixed(6):+(entry-atr*3).toFixed(6);
+    tp3=nextSwingL?.[1]?+(nextSwingL[1].price+buf).toFixed(6):+(entry-atr*5).toFixed(6);
+    tp1Note=nextBullFVG?`FVG бычий $${fmt(nextBullFVG.top)}`:`ATR×1.5`;
+    tp2Note=nextBullOB?`OB бычий $${fmt(nextBullOB.high)}`:nextSwingL?.[0]?`Swing L $${fmt(nextSwingL[0].price)}`:`ATR×3`;
+    tp3Note=nextSwingL?.[1]?`Swing L $${fmt(nextSwingL[1].price)}`:`ATR×5`;
+  } else {
+    entry=price;sl=0;tp1=tp2=tp3=0;
+    entryType=slNote=tp1Note=tp2Note=tp3Note='';
+  }
+
+  // Защита TP
+  if(direction==='long'){
+    if(tp1<=entry){tp1=+(entry+atr*1.2).toFixed(6);tp1Note='ATR×1.2';}
+    if(tp2<=tp1){tp2=+(tp1+atr*1.5).toFixed(6);tp2Note='ATR фолбек';}
+    if(tp3<=tp2){tp3=+(tp2+atr*2).toFixed(6);tp3Note='ATR фолбек';}
+  } else if(direction==='short'){
+    if(tp1>=entry){tp1=+(entry-atr*1.2).toFixed(6);tp1Note='ATR×1.2';}
+    if(tp2>=tp1){tp2=+(tp1-atr*1.5).toFixed(6);tp2Note='ATR фолбек';}
+    if(tp3>=tp2){tp3=+(tp2-atr*2).toFixed(6);tp3Note='ATR фолбек';}
+  }
+
+  const riskAmt=Math.abs(entry-sl);
+  let rr=direction?+(Math.abs(entry-tp2)/Math.max(riskAmt,1e-9)).toFixed(2):null;
+
+  // Фильтр R:R < 1.5
+  if(direction&&rr<1.5)direction=null;
+
+  return{
+    symbol,price,direction,btcConflict,isSweepSignal,prob,rr,
+    ob1h,ob4h,fvg1h,fvg4h,sweep1h,sweep4h,struct1h,struct4h,structD,pd1h,pd4h,
+    bullOBs,bearOBs,bullFVGs,bearFVGs,freshBullSweep,freshBearSweep,
+    recentBullSweep,recentBearSweep,
+    entry,sl,slNote,tp1,tp2,tp3,tp1Note,tp2Note,tp3Note,entryType,
+    bullScore,bearScore,reasons,rsi1,e50,e200,atr
+  };
+}
+
+// ════════════════════════════════════════════
+//  BTC CONTEXT
+// ════════════════════════════════════════════
+async function analyzeBTC(){
+  try{
+    const[c1h,c4h,c1d]=await Promise.all([
+      fetchCandlesCached('BTCUSDT','1h',200),
+      fetchCandlesCached('BTCUSDT','4h',200),
+      fetchCandlesCached('BTCUSDT','1d',100)
+    ]);
+    const price=c1h[c1h.length-1].close;
+    const cld=c1d.map(c=>c.close);
+    const e50_d=calcEMALast(cld,50), e200_d=calcEMALast(cld,200);
+    const structD=findStructureBreaks(c1d);
+    const struct4h=findStructureBreaks(c4h);
+    const sweep4h=findLiquiditySweep(c4h);
+    const ob4h=findOrderBlocks(c4h);
+
+    let score=0;
+    if(e50_d>e200_d)score+=3;else score-=3;
+    if(cld[cld.length-1]>e50_d)score+=2;else score-=2;
+    if(structD.structTrend==='bull')score+=2;else if(structD.structTrend==='bear')score-=2;
+    if(struct4h.bos?.dir==='bull')score+=2;else if(struct4h.bos?.dir==='bear')score-=2;
+    if(sweep4h.filter(s=>s.type==='bull'&&s.fresh).length)score+=2;
+    if(sweep4h.filter(s=>s.type==='bear'&&s.fresh).length)score-=2;
+
+    const dir=score>=4?'bull':score<=-4?'bear':'neut';
+    btcContext={dir,score,e50:e50_d,e200:e200_d,price,structD,struct4h};
+
+    document.getElementById('btcPrice').textContent='$'+fmt(price);
+    const tag=document.getElementById('btcTag');
+    tag.className='btc-tag '+dir;
+    tag.textContent=dir==='bull'?'🟢 БЫЧИЙ':dir==='bear'?'🔴 МЕДВЕЖИЙ':'🟡 НЕЙТРАЛЬНЫЙ';
+    const chochStr=structD.choch?`CHoCH ${structD.choch.dir==='bull'?'↑':'↓'}`:'—';
+    const bosStr=structD.bos?`BOS ${structD.bos.dir==='bull'?'↑':'↓'}✅`:'—';
+    const obStr=ob4h.filter(o=>o.fresh).length?ob4h.filter(o=>o.fresh).length+' OB':'—';
+    document.getElementById('btcSMC').textContent=`CHoCH: ${chochStr} | BOS: ${bosStr} | OB: ${obStr}`;
+    document.getElementById('btcDetail').textContent=`Структура: ${structD.structTrend==='bull'?'🟢 HH/HL':structD.structTrend==='bear'?'🔴 LH/LL':'Нейтр.'} | Score: ${score}`;
+  }catch(e){console.error('BTC error:',e);}
+}
+
+// ════════════════════════════════════════════
+//  FORMAT
+// ════════════════════════════════════════════
+const fmt=n=>{
+  if(n===undefined||n===null||isNaN(n))return'—';
+  const num=+n;
+  if(num>=1000)return num.toLocaleString('en-US',{maximumFractionDigits:2});
+  if(num>=1)return num.toLocaleString('en-US',{maximumFractionDigits:4});
+  return num.toLocaleString('en-US',{maximumFractionDigits:6});
+};
+function probColor(p){return p>=70?'var(--green)':p>=55?'var(--yellow)':'var(--orange)';}
+function pClass(p){return p>=70?'high':p>=55?'med':'low';}
+
+// ════════════════════════════════════════════
+//  DETAIL VIEW
+// ════════════════════════════════════════════
+function renderDetail(d){
+  if(!d.direction||d.btcConflict){
+    const allReasons=[...d.reasons.bull,...d.reasons.bear];
+    return`<div class="detail-card">
+      <div class="d-topbar">
+        <div><div class="d-pair">${d.symbol}</div><div class="d-price-label">ЦЕНА</div><div class="d-price">$${fmt(d.price)}</div></div>
+        <div class="trend-pill flat">⚠ ${d.btcConflict?'BTC БЛОК':'НЕТ СИГНАЛА'}</div>
+      </div>
+      <div class="d-section">
+        <div class="d-section-title">▸ SMC ФАКТОРЫ НА РЫНКЕ</div>
+        <div style="padding:14px 16px;font-size:11px;line-height:2;color:var(--text2)">
+          ${allReasons.length?allReasons.map(r=>`<div>${r}</div>`).join(''):'<div>Нет чётких SMC сигналов. Жди формирования OB или Sweep.</div>'}
+        </div>
+        <div style="padding:10px 16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px;">
+          <div>PD Zone 1H: <b style="color:${d.pd1h?.zone==='discount'?'var(--green)':'var(--red)'}">${d.pd1h?.zone?.toUpperCase()} (${d.pd1h?.pct}%)</b></div>
+          <div>PD Zone 4H: <b style="color:${d.pd4h?.zone==='discount'?'var(--green)':'var(--red)'}">${d.pd4h?.zone?.toUpperCase()} (${d.pd4h?.pct}%)</b></div>
+          <div>OB свежих: <b style="color:var(--accent)">${(d.ob1h||[]).filter(o=>o.fresh).length} шт</b></div>
+          <div>FVG открытых: <b style="color:var(--accent)">${(d.fvg1h||[]).length} шт</b></div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="document.getElementById('detailPanel').innerHTML=''">✕ ЗАКРЫТЬ</button>
+    </div>`;
+  }
+
+  const dir=d.direction;
+  const dirReasons=dir==='long'?d.reasons.bull:d.reasons.bear;
+
+  // Зоны для отображения
+  const relevantOBs=[...d.bullOBs.slice(-2),...d.bearOBs.slice(-2)];
+  const relevantFVGs=[...d.bullFVGs.slice(-2),...d.bearFVGs.slice(-2)];
+  const sweeps=[...d.freshBullSweep,...d.freshBearSweep,...d.recentBullSweep.slice(0,1),...d.recentBearSweep.slice(0,1)];
+
+  return`<div class="detail-card">
+    <div class="d-topbar">
+      <div>
+        <div class="d-pair">${d.symbol}</div>
+        <div class="d-price-label">ЦЕНА</div>
+        <div class="d-price">$${fmt(d.price)}</div>
+      </div>
+      <div class="d-right">
+        <div class="prob-badge">
+          <div class="prob-badge-label">СИЛА</div>
+          <div style="font-size:20px;font-weight:700;color:${probColor(d.prob)}">${d.prob}%</div>
+        </div>
+        <div class="trend-pill ${d.isSweepSignal?'sweep':dir}">
+          ${d.isSweepSignal?'⚡ SWEEP':dir==='long'?'📈 ЛОНГ':'📉 ШОРТ'}
+        </div>
+      </div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-title">▸ SMC ПРИЧИНЫ СИГНАЛА</div>
+      <div style="padding:12px 16px;font-size:11px;line-height:2">
+        ${dirReasons.map(r=>`<div>${r}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-title">▸ ORDER BLOCKS (зоны накопления ордеров)</div>
+      <div style="padding:10px 14px;">
+        ${relevantOBs.length?relevantOBs.map(ob=>`
+          <div class="smc-zone ${ob.type==='bull'?'ob-bull':'ob-bear'}">
+            <div class="zone-title">${ob.type==='bull'?'🟩 БЫЧИЙ OB':'🟥 МЕДВЕЖИЙ OB'} ${ob.fresh?'● СВЕЖИЙ':'○ использован'}</div>
+            <div class="zone-range">$${fmt(ob.low)} — $${fmt(ob.high)}</div>
+            <div class="zone-note">Вход при ретесте этой зоны · Midpoint: $${fmt(ob.midpoint)}</div>
+          </div>`).join(''):'<div style="padding:8px;font-size:10px;color:var(--text2)">OB не найдены в текущем диапазоне</div>'}
+      </div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-title">▸ FAIR VALUE GAPS (магниты для цены)</div>
+      <div style="padding:10px 14px;">
+        ${relevantFVGs.length?relevantFVGs.map(f=>`
+          <div class="smc-zone ${f.type==='bull'?'fvg-bull':'fvg-bear'}">
+            <div class="zone-title">${f.type==='bull'?'📊 FVG БЫЧИЙ':'📊 FVG МЕДВЕЖИЙ'}</div>
+            <div class="zone-range">$${fmt(f.bottom)} — $${fmt(f.top)} (размер: ${(f.size/d.price*100).toFixed(2)}%)</div>
+            <div class="zone-note">Цена стремится заполнить этот гэп</div>
+          </div>`).join(''):'<div style="padding:8px;font-size:10px;color:var(--text2)">FVG не найдены рядом с ценой</div>'}
+      </div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-title">▸ LIQUIDITY SWEEPS + СТРУКТУРА</div>
+      <div class="d-grid g2">
+        <div class="d-cell">
+          <div class="d-label">SWEEP (выбивание стопов)</div>
+          ${sweeps.length?sweeps.map(s=>`
+            <div class="smc-zone sweep-zone" style="margin-bottom:4px">
+              <div class="zone-title">${s.type==='bull'?'⚡ SWEEP ЛОЕВ':'⚡ SWEEP ХАЕВ'} ${s.fresh?'🔥 СВЕЖИЙ':''}</div>
+              <div class="zone-range">Уровень: $${fmt(s.level)}</div>
+              <div class="zone-note">${s.age} свечей назад</div>
+            </div>`).join(''):'<div style="font-size:10px;color:var(--text2);padding:6px">Нет недавних sweep</div>'}
+        </div>
+        <div class="d-cell">
+          <div class="d-label">CHoCH / BOS / СТРУКТУРА</div>
+          <div style="font-size:11px;line-height:2">
+            <div>1H BOS: <b style="color:${d.struct1h.bos?.dir==='bull'?'var(--green)':d.struct1h.bos?.dir==='bear'?'var(--red)':'var(--text2)'}">${d.struct1h.bos?`${d.struct1h.bos.dir==='bull'?'↑ Вверх':'↓ Вниз'} ✅`:'—'}</b></div>
+            <div>1H CHoCH: <b style="color:${d.struct1h.choch?.dir==='bull'?'var(--green)':d.struct1h.choch?.dir==='bear'?'var(--red)':'var(--text2)'}">${d.struct1h.choch?`${d.struct1h.choch.dir==='bull'?'↑':'↓'} 🔄`:'—'}</b></div>
+            <div>4H: <b style="color:${d.struct4h.structTrend==='bull'?'var(--green)':d.struct4h.structTrend==='bear'?'var(--red)':'var(--text2)'}">${d.struct4h.structTrend==='bull'?'HH/HL 🟢':d.struct4h.structTrend==='bear'?'LH/LL 🔴':'Нейтр.'}</b></div>
+            <div>Daily: <b style="color:${d.structD.structTrend==='bull'?'var(--green)':d.structD.structTrend==='bear'?'var(--red)':'var(--text2)'}">${d.structD.structTrend==='bull'?'HH/HL 🟢':d.structD.structTrend==='bear'?'LH/LL 🔴':'Нейтр.'}</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-title">▸ PREMIUM / DISCOUNT ZONES</div>
+      <div class="d-grid g2">
+        <div class="d-cell">
+          <div class="d-label">1H ZONE</div>
+          <div class="d-value ${d.pd1h.zone==='discount'?'green':'red'}">${d.pd1h.zone==='discount'?'💚 DISCOUNT':'🔴 PREMIUM'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">${d.pd1h.pct}% диапазона · EQ: $${fmt(d.pd1h.eq)}</div>
+        </div>
+        <div class="d-cell">
+          <div class="d-label">4H ZONE</div>
+          <div class="d-value ${d.pd4h.zone==='discount'?'green':'red'}">${d.pd4h.zone==='discount'?'💚 DISCOUNT':'🔴 PREMIUM'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">${d.pd4h.pct}% диапазона · EQ: $${fmt(d.pd4h.eq)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="trade-section">
+      <div class="trade-title">▸ ПАРАМЕТРЫ СДЕЛКИ (SMC УРОВНИ)</div>
+      <div class="trade-grid">
+        <div class="trade-box entry">
+          <div class="trade-lbl">ВХОД</div>
+          <div class="trade-num">$${fmt(d.entry)}</div>
+          <div class="trade-note">${d.entryType||''}</div>
+        </div>
+        <div class="trade-box sl">
+          <div class="trade-lbl">СТОП</div>
+          <div class="trade-num">$${fmt(d.sl)}</div>
+          <div class="trade-note">${d.slNote||''}</div>
+        </div>
+        <div class="trade-box tp">
+          <div class="trade-lbl">TP 1</div>
+          <div class="trade-num">$${fmt(d.tp1)}</div>
+          <div class="trade-note">${d.tp1Note||''}</div>
+        </div>
+        <div class="trade-box tp">
+          <div class="trade-lbl">TP 2</div>
+          <div class="trade-num">$${fmt(d.tp2)}</div>
+          <div class="trade-note">${d.tp2Note||''}</div>
+        </div>
+        <div class="trade-box tp">
+          <div class="trade-lbl">TP 3</div>
+          <div class="trade-num">$${fmt(d.tp3)}</div>
+          <div class="trade-note">${d.tp3Note||''}</div>
+        </div>
+      </div>
+      <div class="rr-bar">
+        <div class="rr-label">R:R</div>
+        <div class="rr-track"><div class="rr-fill" style="width:${Math.min((d.rr||0)/5*100,100)}%;background:${(d.rr||0)>=2?'var(--green)':(d.rr||0)>=1.5?'var(--yellow)':'var(--red)'}"></div></div>
+        <div class="rr-value" style="color:${(d.rr||0)>=2?'var(--green)':(d.rr||0)>=1.5?'var(--yellow)':'var(--red)'}">1:${d.rr} ${(d.rr||0)>=2?'✅':''}</div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text2);display:flex;gap:14px;flex-wrap:wrap">
+        <span>⚠ Риск: <b style="color:var(--red)">$${fmt(Math.abs(d.entry-d.sl))}</b></span>
+        <span>💰 TP2: <b style="color:var(--green)">$${fmt(Math.abs(d.entry-d.tp2))}</b></span>
+      </div>
+    </div>
+    <button class="close-btn" onclick="document.getElementById('detailPanel').innerHTML=''">✕ ЗАКРЫТЬ</button>
+  </div>`;
+}
+
+async function showDetail(symbol){
+  const panel=document.getElementById('detailPanel');
+  panel.innerHTML=`<div style="padding:28px;text-align:center;border:1px solid var(--border2);background:var(--surface);margin-bottom:10px"><div style="width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite"></div><div style="font-size:10px;letter-spacing:3px;color:var(--text2)">SMC АНАЛИЗ ${symbol}...</div></div>`;
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+  try{
+    const d=await smcAnalysis(symbol);
+    panel.innerHTML=renderDetail(d);
+  }catch(e){
+    panel.innerHTML=`<div style="padding:16px;border:1px solid rgba(255,45,85,.3);color:var(--red);font-size:11px;margin-bottom:10px">❌ ${e.message}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════
+//  GRID
+// ════════════════════════════════════════════
+function initGrid(){
+  const g=document.getElementById('scannerGrid');
+  g.innerHTML='';
+  COINS.forEach(sym=>{
+    const c=document.createElement('div');
+    c.className='coin-card flat';
+    c.id='card_'+sym;
+    c.onclick=()=>showDetail(sym);
+    c.innerHTML=`
+      <div class="cc-top"><div class="cc-sym">${sym.replace('USDT','')}</div><div class="cc-prob" id="prob_${sym}">—</div></div>
+      <div class="cc-price" id="cprice_${sym}">—</div>
+      <div class="cc-trend scanning" id="ctrend_${sym}">ОЖИДАНИЕ</div>
+      <div class="cc-smc" id="csmc_${sym}"></div>
+      <div class="cc-rr" id="crr_${sym}"></div>`;
+    g.appendChild(c);
+  });
+}
+
+function updateCard(d){
+  const{symbol,price,direction,isSweepSignal,prob,rr}=d;
+  const card=document.getElementById('card_'+symbol);
+  const probEl=document.getElementById('prob_'+symbol);
+  const priceEl=document.getElementById('cprice_'+symbol);
+  const trendEl=document.getElementById('ctrend_'+symbol);
+  const smcEl=document.getElementById('csmc_'+symbol);
+  const rrEl=document.getElementById('crr_'+symbol);
+  if(!card)return;
+
+  priceEl.textContent='$'+fmt(price);
+
+  // SMC highlights
+  const smcTags=[];
+  if((d.freshBullSweep||[]).length||(d.freshBearSweep||[]).length)smcTags.push('⚡Sweep');
+  if((d.bullOBs||[]).length||(d.bearOBs||[]).length)smcTags.push('🟩OB');
+  if((d.bullFVGs||[]).length||(d.bearFVGs||[]).length)smcTags.push('📊FVG');
+  if(d.struct1h?.bos)smcTags.push('✅BOS');
+  smcEl.textContent=smcTags.join(' ');
+
+  if(direction){
+    const cls=isSweepSignal?'sweep':direction;
+    card.className='coin-card '+cls;
+    trendEl.className='cc-trend '+cls;
+    trendEl.textContent=isSweepSignal?'⚡ SWEEP '+(direction==='long'?'ЛОНГ':'ШОРТ'):direction==='long'?'📈 ЛОНГ':'📉 ШОРТ';
+    probEl.className='cc-prob '+pClass(prob);
+    probEl.textContent=prob+'%';
+    if(rrEl&&rr)rrEl.textContent='R:R 1:'+rr;
+  } else {
+    card.className='coin-card flat';
+    trendEl.className='cc-trend flat';
+    trendEl.textContent='— ФЛЕТ';
+    probEl.textContent='';
+    if(rrEl)rrEl.textContent='';
+  }
+}
+
+// ════════════════════════════════════════════
+//  NOTIFICATIONS
+// ════════════════════════════════════════════
+function toggleNotif(){
+  notifEnabled=document.getElementById('notifToggle').checked;
+  if(notifEnabled&&Notification.permission==='default')Notification.requestPermission();
+}
+function showToast(sym,dir,prob,isSweep){
+  // Fix 13: не более 3 тостов одновременно — удаляем старые
+  const existing=document.querySelectorAll('.toast');
+  if(existing.length>=3)existing[0].remove();
+
+  const t=document.createElement('div');
+  t.className='toast '+(isSweep?'sweep':dir==='long'?'long':'short');
+  t.innerHTML=`${isSweep?'⚡ SWEEP':dir==='long'?'📈':'📉'} <b>${sym}</b> — ${prob}%<br><small>${isSweep?'Выбивание стопов — лучший вход!':dir==='long'?'Лонг сигнал':'Шорт сигнал'}</small>`;
+  t.onclick=()=>{showDetail(sym);t.remove();};
+  document.body.appendChild(t);
+  setTimeout(()=>{if(t.parentNode)t.remove();},7000);
+}
+function fireAlert(sym,dir,prob,price,isSweep){
+  if(notifEnabled&&Notification.permission==='granted'){
+    new Notification(`${isSweep?'⚡':dir==='long'?'📈':'📉'} ${sym} ${isSweep?'SWEEP':'SMC'} — ${prob}%`,{body:`$${fmt(price)}`});
+  }
+  showToast(sym,dir,prob,isSweep);
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=isSweep?1047:dir==='long'?880:440;
+    g.gain.setValueAtTime(0.3,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+(isSweep?0.6:0.4));
+    o.start();o.stop(ctx.currentTime+(isSweep?0.6:0.4));
+  }catch(e){}
+}
+
+// ════════════════════════════════════════════
+//  Fix 12: ИСТОРИЯ СИГНАЛОВ
+// ════════════════════════════════════════════
+const signalHistory=[]; // [{time, signals:[]}]
+const MAX_HISTORY=10;
+
+function addToSignalHistory(signals){
+  const entry={
+    time:new Date().toLocaleTimeString('ru-RU'),
+    count:signals.length,
+    items:signals.map(s=>({symbol:s.symbol,direction:s.direction,prob:s.prob,rr:s.rr,isSweep:s.isSweepSignal}))
+  };
+  signalHistory.unshift(entry);
+  if(signalHistory.length>MAX_HISTORY)signalHistory.length=MAX_HISTORY;
+  renderHistory();
+}
+
+function renderHistory(){
+  const box=document.getElementById('historyBox');
+  const lbl=document.getElementById('historyLabel');
+  if(!box)return;
+  if(!signalHistory.length){box.innerHTML='';if(lbl)lbl.style.display='none';return;}
+  if(lbl)lbl.style.display='flex';
+  box.innerHTML=signalHistory.map((entry,i)=>`
+    <div style="padding:8px 12px;border:1px solid var(--border2);margin-bottom:4px;background:var(--surface)">
+      <div style="font-size:9px;color:var(--text2);letter-spacing:2px;margin-bottom:4px">🕐 ${entry.time} — ${entry.count} сигнал(ов)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${entry.items.map(s=>`<span style="font-size:9px;padding:2px 7px;border:1px solid ${s.direction==='long'?'var(--green)':'var(--red)'};color:${s.direction==='long'?'var(--green)':'var(--red)'};cursor:pointer" onclick="showDetail('${s.symbol}')">${s.isSweep?'⚡':s.direction==='long'?'↑':'↓'} ${s.symbol.replace('USDT','')} ${s.prob}%</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════
+//  MAIN SCAN
+// ════════════════════════════════════════════
+async function startScan(){
+  const btn=document.getElementById('scanBtn');
+  const prog=document.getElementById('scanProg');
+  btn.disabled=true;btn.textContent='⏳ СКАНИРОВАНИЕ...';
+  prog.style.display='block';
+
+  // Fix 8: сбрасываем кэш в начале каждого скана
+  clearCandleCache();
+
+  COINS.forEach(sym=>{
+    const t=document.getElementById('ctrend_'+sym);
+    if(t){t.className='cc-trend scanning';t.textContent='СКАН...';}
+    const c=document.getElementById('card_'+sym);
+    if(c)c.className='coin-card flat';
+    const p=document.getElementById('prob_'+sym);
+    if(p)p.textContent='';
+  });
+
+  document.getElementById('progLabel').textContent='АНАЛИЗ BTC...';
+  await analyzeBTC();
+
+  const signals=[];
+  // Fix 9: BTC уже проанализирован в analyzeBTC(), пропускаем его в общем цикле
+  const SCAN_COINS=COINS.filter(s=>s!=='BTCUSDT');
+  const BATCH=4;
+  for(let i=0;i<SCAN_COINS.length;i+=BATCH){
+    const batch=SCAN_COINS.slice(i,i+BATCH);
+    const res=await Promise.allSettled(batch.map(s=>smcAnalysis(s)));
+    res.forEach((r,idx)=>{
+      const sym=batch[idx];
+      if(r.status==='fulfilled'){
+        const d=r.value;
+        updateCard(d);
+        if(d.direction){
+          signals.push(d);
+          if(lastAlerts[sym]!==d.direction){
+            lastAlerts[sym]=d.direction;
+            fireAlert(sym,d.direction,d.prob,d.price,d.isSweepSignal);
+          }
+        } else delete lastAlerts[sym];
+      } else {
+        const c=document.getElementById('card_'+sym);
+        if(c)c.className='coin-card flat';
+        const t=document.getElementById('ctrend_'+sym);
+        if(t){t.className='cc-trend flat';t.textContent='ERR';}
+      }
+    });
+    const pct=Math.round(((i+BATCH)/SCAN_COINS.length)*100);
+    document.getElementById('progFill').style.width=Math.min(pct,100)+'%';
+    document.getElementById('progCoins').textContent=`${Math.min(i+BATCH,SCAN_COINS.length)} / ${SCAN_COINS.length}`;
+    document.getElementById('progLabel').textContent=`СКАНИРОВАНИЕ... ${Math.min(i+BATCH,SCAN_COINS.length)}/${SCAN_COINS.length}`;
+  }
+
+  // Alerts panel
+  const alertBox=document.getElementById('alertBox');
+  const alertLabel=document.getElementById('alertLabel');
+  if(signals.length){
+    alertLabel.style.display='flex';
+    alertBox.innerHTML=signals.map(s=>`
+      <div class="alert-item ${s.isSweepSignal?'long':s.direction}" onclick="showDetail('${s.symbol}')">
+        <div class="a-sym ${s.direction}">${s.isSweepSignal?'⚡ ':''}${s.symbol.replace('USDT','')}</div>
+        <div><div class="a-prob" style="color:${probColor(s.prob)}">${s.prob}%</div></div>
+        <div class="a-info">${(s.direction==='long'?s.reasons.bull:s.reasons.bear).slice(0,2).join('<br>')}</div>
+        <div class="a-rr">1:${s.rr}</div>
+      </div>`).join('');
+  } else {
+    alertLabel.style.display='none';
+    alertBox.innerHTML='';
+  }
+
+  // Fix 12: сохраняем историю сигналов
+  if(signals.length) addToSignalHistory(signals);
+
+  // Stats — Fix 10: переименован "Winrate" в "Сила"
+  const avgP=signals.length?Math.round(signals.reduce((a,b)=>a+b.prob,0)/signals.length):0;
+  const avgRR=signals.length?+(signals.reduce((a,b)=>a+(b.rr||0),0)/signals.length).toFixed(1):0;
+  document.getElementById('stTotal').textContent=SCAN_COINS.length;
+  document.getElementById('stSignals').textContent=signals.length;
+  document.getElementById('stWinrate').textContent=signals.length?avgP+'%':'—';
+  document.getElementById('stRR').textContent=signals.length?'1:'+avgRR:'—';
+
+  prog.style.display='none';
+  btn.disabled=false;
+  btn.textContent='⚡  СКАНИРОВАТЬ ВСЕ';
+}
+
+function toggleAuto(){
+  const on=document.getElementById('autoScan').checked;
+  if(on){const ms=+document.getElementById('autoInterval').value;startScan();autoTimer=setInterval(startScan,ms);}
+  else{clearInterval(autoTimer);autoTimer=null;}
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+initGrid();
+analyzeBTC();
 </script>
 
 </body>
