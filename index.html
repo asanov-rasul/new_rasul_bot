@@ -1306,33 +1306,46 @@ async function showDetail(symbol){
 }
 
 // ════════════════════════════════════════════
-//  BINANCE DEEP LINK
+//  BINANCE LINKS
 // ════════════════════════════════════════════
 function openBinance(e, symbol){
   e.stopPropagation();
-  const pair = symbol.replace('USDT','') + '_USDT';
-  const appUrl = `bnc://app/spot/${symbol}`;
-  const webUrl = `https://www.binance.com/en/trade/${pair}?type=spot`;
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
-  let appOpened = false;
-  const timer = setTimeout(()=>{
-    if(!appOpened && !document.hidden){window.open(webUrl, '_blank');}
-    document.body.removeChild(iframe);
+  const base = symbol.replace('USDT','');
+  // Пробуем несколько форматов deep link для приложения Binance
+  const links = [
+    `binance://app/spot/${symbol}`,
+    `bnc://app/spot/${symbol}`,
+    `https://app.binance.com/en/trade/spot/${base}_USDT`,
+  ];
+  // Открываем первый через href, остальные как fallback
+  const a = document.createElement('a');
+  a.href = links[0];
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Fallback: если приложение не открылось за 1.5с — открываем веб
+  const t = setTimeout(()=>{
+    if(!document.hidden) window.open(links[2], '_blank');
   }, 1500);
-  document.addEventListener('visibilitychange', function handler(){
-    if(document.hidden){ appOpened = true; clearTimeout(timer); }
-    document.removeEventListener('visibilitychange', handler);
-  }, {once:true});
-  iframe.src = appUrl;
+  document.addEventListener('visibilitychange', ()=>clearTimeout(t), {once:true});
 }
 
 function openBinanceFutures(e, symbol){
   e.stopPropagation();
-  const pair = symbol.replace('USDT','') + 'USDT';
-  const webUrl = `https://www.binance.com/en/futures/${pair}`;
-  window.open(webUrl, '_blank');
+  const base = symbol.replace('USDT','');
+  const appLink = `binance://app/futures/${symbol}`;
+  const webLink = `https://app.binance.com/en/futures/${symbol}`;
+  const a = document.createElement('a');
+  a.href = appLink;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  const t = setTimeout(()=>{
+    if(!document.hidden) window.open(webLink, '_blank');
+  }, 1500);
+  document.addEventListener('visibilitychange', ()=>clearTimeout(t), {once:true});
 }
 
 // ════════════════════════════════════════════
@@ -1525,7 +1538,7 @@ async function startSpotScan(){
         </div>
         <div class="spot-reasons">${s.reasons.bull.slice(0,3).join('<br>')}</div>
         <div class="spot-action-row">
-          <a class="spot-open-btn" href="bnc://app/spot/${s.symbol}" onclick="openBinance(event,'${s.symbol}')">📊 ОТКРЫТЬ НА BINANCE SPOT</a>
+          <a class="spot-open-btn" href="#" onclick="openBinance(event,'${s.symbol}')">📊 ОТКРЫТЬ НА BINANCE SPOT</a>
         </div>
       </div>`).join('');
   } else {
@@ -1563,7 +1576,7 @@ async function startSpotScan(){
         </div>
         <div class="spot-reasons">${s.reasons.bull.slice(0,2).join('<br>') || 'Зона discount, ждём ретест OB/FVG'}</div>
         <div class="spot-action-row">
-          <a class="spot-open-btn" href="bnc://app/spot/${s.symbol}" onclick="openBinance(event,'${s.symbol}')">📊 ВЫСТАВИТЬ ОРДЕР</a>
+          <a class="spot-open-btn" href="#" onclick="openBinance(event,'${s.symbol}')">📊 ВЫСТАВИТЬ ОРДЕР</a>
         </div>
       </div>`).join('');
   } else {
@@ -1745,7 +1758,7 @@ async function startScan(){
         <div><div class="a-prob" style="color:${probColor(s.prob)}">${s.prob}%</div></div>
         <div class="a-info">${(s.direction==='long'?s.reasons.bull:s.reasons.bear).slice(0,2).join('<br>')}</div>
         <div class="a-rr">1:${s.rr}</div>
-        <a class="binance-btn" href="bnc://app/spot/${s.symbol}" onclick="openBinance(event,'${s.symbol}')">📊 BINANCE</a>
+        <a class="binance-btn" href="#" onclick="openBinance(event,'${s.symbol}')">📊 BINANCE</a>
       </div>`).join('');
   } else {
     alertLabel.style.display='none';
