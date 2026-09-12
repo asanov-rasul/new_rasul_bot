@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIGNAL ULTRA · v6 SMC</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050608;--bg2:#080b10;--bg3:#0d1018;--bg4:#111520;
+  --border:#1a2035;--border2:#222c42;
+  --text:#c8d4e8;--text2:#6a7d9a;--text3:#3a4a5e;
+  --accent:#00d4ff;--accent2:#0099bb;
+  --green:#00c896;--green2:rgba(0,200,150,.12);
+  --red:#ff3d57;--red2:rgba(255,61,87,.12);
+  --yellow:#ffc93c;--purple:#a855f7;--orange:#ff8c42;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-display:'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-mono);font-size:13px;overflow-x:hidden;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.app{display:flex;flex-direction:column;height:100vh;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:50px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;gap:10px;}
+.logo{font-family:var(--font-display);font-size:16px;font-weight:900;letter-spacing:-0.5px;white-space:nowrap;}
+.logo span{color:var(--accent);}
+.logo-sub{font-size:8px;letter-spacing:2px;color:var(--text2);margin-top:1px;}
+.topbar-prices{display:flex;gap:14px;overflow:hidden;}
+.tp{display:flex;align-items:center;gap:5px;font-size:10px;flex-shrink:0;}
+.tp-sym{color:var(--text2);}
+.tp-price{font-weight:700;color:#fff;}
+.tp-chg{font-size:9px;padding:1px 4px;border-radius:2px;}
+.tp-chg.up{background:rgba(0,200,150,.15);color:var(--green);}
+.tp-chg.dn{background:rgba(255,61,87,.15);color:var(--red);}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.clock{font-size:10px;color:var(--text2);}
+.ws-indicator{display:flex;align-items:center;gap:5px;}
+.ws-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);box-shadow:0 0 6px var(--yellow);}
+.ws-dot.on{background:var(--green);box-shadow:0 0 6px var(--green);}
+.ws-label{font-size:9px;color:var(--text2);}
+.nav{display:flex;gap:0;padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+.nav::-webkit-scrollbar{height:0;}
+.nav-btn{padding:10px 14px;font-family:var(--font-mono);font-size:10px;color:var(--text2);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;letter-spacing:.5px;text-transform:uppercase;}
+.nav-btn:hover{color:var(--text);}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.main{flex:1;overflow-y:auto;padding:14px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+.single-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.ctrl-group{display:flex;flex-direction:column;gap:5px;}
+.ctrl-label{font-size:9px;letter-spacing:2px;color:var(--text2);text-transform:uppercase;}
+.ctrl-select,.ctrl-input{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:8px 10px;color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;width:100%;}
+.ctrl-select:focus,.ctrl-input:focus{border-color:var(--accent);}
+.lev-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.lev-q{padding:3px 8px;background:var(--bg4);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-family:var(--font-mono);font-size:10px;cursor:pointer;}
+.lev-q:hover,.lev-q.on{background:var(--yellow);color:#000;border-color:var(--yellow);font-weight:700;}
+input[type=range]{width:100%;accent-color:var(--yellow);height:4px;cursor:pointer;}
+.lev-display{font-size:13px;font-weight:700;color:var(--yellow);}
+.analyze-btn,.scan-btn{width:100%;padding:12px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;text-transform:uppercase;border-radius:4px;margin-bottom:12px;}
+.analyze-btn:hover,.scan-btn:hover{background:rgba(0,212,255,.08);}
+.analyze-btn:disabled,.scan-btn:disabled{opacity:.4;cursor:not-allowed;}
+.signal-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.signal-card.long{border-top:2px solid var(--green);}
+.signal-card.short{border-top:2px solid var(--red);}
+.signal-card.none{border-top:2px solid var(--text3);}
+.sc-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid var(--border);}
+.sc-pair{font-family:var(--font-display);font-size:17px;font-weight:700;color:#fff;}
+.sc-meta{font-size:9px;color:var(--text2);margin-top:2px;}
+.sc-dir{padding:4px 12px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.5px;}
+.sc-dir.long{background:rgba(0,200,150,.15);color:var(--green);border:1px solid rgba(0,200,150,.3);}
+.sc-dir.short{background:rgba(255,61,87,.15);color:var(--red);border:1px solid rgba(255,61,87,.3);}
+.sc-dir.none{background:var(--bg4);color:var(--text2);border:1px solid var(--border);}
+.sc-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+.verdict{padding:10px 12px;border-radius:5px;font-size:11px;font-weight:700;line-height:1.6;}
+.verdict.enter{background:rgba(0,200,150,.08);border:1px solid rgba(0,200,150,.3);color:var(--green);}
+.verdict.wait{background:rgba(255,201,60,.06);border:1px solid rgba(255,201,60,.3);color:var(--yellow);}
+.verdict.stop{background:rgba(255,61,87,.06);border:1px solid rgba(255,61,87,.3);color:var(--red);}
+.verdict-sub{font-weight:400;color:var(--text2);font-size:10px;margin-top:4px;}
+.tf-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.tf-box{border-radius:4px;padding:7px 8px;text-align:center;border:1px solid;}
+.tf-lbl{font-size:8px;letter-spacing:1px;color:var(--text2);text-transform:uppercase;margin-bottom:3px;}
+.tf-val{font-size:11px;font-weight:700;}
+.tf-bull{background:rgba(0,200,150,.06);border-color:rgba(0,200,150,.25);color:var(--green);}
+.tf-bear{background:rgba(255,61,87,.06);border-color:rgba(255,61,87,.25);color:var(--red);}
+.tf-neu{background:var(--bg4);border-color:var(--border);color:var(--text2);}
+.levels-table{width:100%;border-collapse:collapse;font-size:11px;}
+.levels-table th{text-align:left;padding:6px 8px;font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
+.levels-table td{padding:7px 8px;border-bottom:1px solid var(--border);}
+.levels-table tr:last-child td{border-bottom:none;}
+.td-green{color:var(--green);font-weight:700;}
+.td-red{color:var(--red);font-weight:700;}
+.td-yellow{color:var(--yellow);font-weight:600;}
+.td-mono{font-family:var(--font-mono);}
+.conf-row{display:flex;align-items:center;gap:10px;}
+.conf-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.conf-fill{height:100%;border-radius:2px;}
+.conf-high{background:var(--green);}
+.conf-mid{background:var(--yellow);}
+.conf-low{background:var(--red);}
+.conf-pct{font-size:13px;font-weight:700;font-family:var(--font-display);}
+.inds{display:flex;flex-wrap:wrap;gap:4px;}
+.ind{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600;border:1px solid;}
+.ind-bull{background:rgba(0,200,150,.1);color:var(--green);border-color:rgba(0,200,150,.3);}
+.ind-bear{background:rgba(255,61,87,.1);color:var(--red);border-color:rgba(255,61,87,.3);}
+.ind-neu{background:var(--bg4);color:var(--text2);border-color:var(--border);}
+.ind-yellow{background:rgba(255,201,60,.08);color:var(--yellow);border-color:rgba(255,201,60,.3);}
+.rr-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.badge{padding:3px 9px;border-radius:3px;font-size:10px;font-weight:700;}
+.badge-rr{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.3);}
+.badge-ok{background:rgba(0,200,150,.1);color:var(--green);border:1px solid rgba(0,200,150,.3);}
+.badge-warn{background:rgba(255,201,60,.08);color:var(--yellow);border:1px solid rgba(255,201,60,.3);}
+.reasoning{font-size:11px;color:var(--text2);line-height:1.6;padding:10px 12px;background:var(--bg4);border-radius:4px;border-left:2px solid var(--accent);}
+.binance-btn{display:block;width:100%;padding:11px;background:rgba(240,185,11,.12);border:1px solid rgba(240,185,11,.4);color:#f0b90b;font-family:var(--font-mono);font-weight:700;font-size:11px;letter-spacing:2px;text-align:center;text-decoration:none;border-radius:4px;cursor:pointer;}
+.risk-box{padding:10px 12px;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.15);border-radius:5px;font-size:11px;line-height:1.8;color:var(--text2);}
+.risk-box b{color:var(--text);}
+.scan-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pair-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.pair-chip{padding:7px 3px;text-align:center;font-size:9px;font-weight:700;border-radius:4px;border:1px solid var(--border);cursor:pointer;color:var(--text2);background:var(--bg3);user-select:none;letter-spacing:.5px;}
+.pair-chip.on{background:rgba(0,212,255,.08);color:var(--accent);border-color:rgba(0,212,255,.4);}
+.pair-chip.busy{background:rgba(255,201,60,.06);color:var(--yellow);}
+.pair-chip.dl{background:rgba(0,200,150,.08);color:var(--green);border-color:rgba(0,200,150,.3);}
+.pair-chip.ds{background:rgba(255,61,87,.08);color:var(--red);border-color:rgba(255,61,87,.3);}
+.pair-chip.none{color:var(--text3);}
+.select-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.mini-btn{padding:4px 10px;font-size:10px;font-weight:700;border:1px solid var(--border);border-radius:3px;background:var(--bg3);color:var(--text2);cursor:pointer;}
+.mini-btn.g{border-color:rgba(0,200,150,.3);color:var(--green);}
+.mini-btn.r{border-color:rgba(255,61,87,.3);color:var(--red);}
+.auto-bar{display:none;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(0,200,150,.05);border:1px solid rgba(0,200,150,.2);border-radius:4px;margin-bottom:10px;}
+.auto-txt{font-size:10px;color:var(--green);letter-spacing:1px;}
+.auto-cd{font-size:13px;font-weight:700;color:var(--green);font-family:var(--font-display);}
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-bottom:14px;}
+.stat-cell{background:var(--bg3);padding:10px 8px;text-align:center;}
+.stat-label{font-size:8px;letter-spacing:1px;color:var(--text2);margin-bottom:4px;}
+.stat-value{font-family:var(--font-display);font-weight:700;font-size:14px;}
+.sv-g{color:var(--green);}
+.sv-r{color:var(--red);}
+.sv-y{color:var(--yellow);}
+.sv-p{color:var(--purple);}
+.progress-wrap{display:none;margin-bottom:12px;}
+.progress-label{font-size:9px;letter-spacing:2px;color:var(--text2);margin-bottom:5px;}
+.progress-track{height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;}
+.progress-coins{font-size:9px;color:var(--text2);margin-top:3px;}
+.best-banner{padding:14px;border-radius:6px;margin-bottom:12px;border:1px solid;}
+.best-banner.long{background:rgba(0,200,150,.06);border-color:rgba(0,200,150,.3);}
+.best-banner.short{background:rgba(255,61,87,.06);border-color:rgba(255,61,87,.3);}
+.best-title{font-size:10px;letter-spacing:3px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;}
+.best-pair{font-family:var(--font-display);font-size:20px;font-weight:700;color:#fff;}
+.best-info{font-size:11px;color:var(--text2);line-height:1.8;margin-top:8px;}
+.calc-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--border);}
+.ctab{flex:1;padding:9px;font-size:10px;font-weight:700;text-align:center;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;text-transform:uppercase;}
+.ctab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.calc-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-bottom:12px;}
+.calc-head{padding:12px 14px;background:var(--bg4);border-bottom:1px solid var(--border);font-family:var(--font-display);font-weight:700;font-size:13px;color:#fff;}
+.calc-body{padding:14px;}
+.calc-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.calc-3{grid-template-columns:1fr 1fr 1fr;}
+.input-group{display:flex;flex-direction:column;gap:4px;}
+.input-label{font-size:9px;letter-spacing:1px;color:var(--text2);text-transform:uppercase;}
+.calc-result{background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:12px;margin-top:10px;}
+.crow{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border);}
+.crow:last-child{border-bottom:none;font-weight:700;font-size:12px;}
+.cg{color:var(--green);}
+.cr{color:var(--red);}
+.cp{color:var(--purple);}
+.alerts-section{display:flex;flex-direction:column;}
+.alert-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.sw{position:relative;width:40px;height:22px;flex-shrink:0;}
+.sw input{opacity:0;width:0;height:0;position:absolute;}
+.sl{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:22px;transition:.3s;}
+.sl:before{position:absolute;content:'';height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+.sw input:checked+.sl{background:var(--green);}
+.sw input:checked+.sl:before{transform:translateX(18px);}
+.alert-item-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.alert-tags{display:flex;gap:3px;align-items:center;}
+.tag{padding:1px 6px;border-radius:2px;font-size:9px;font-weight:700;}
+.tag-ok{background:rgba(0,200,150,.15);color:var(--green);}
+.tag-no{background:var(--bg4);color:var(--text3);}
+.tag-sl{background:rgba(255,61,87,.15);color:var(--red);}
+.del-btn{padding:2px 7px;font-size:9px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;}
+.tg-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:14px;}
+.tg-title{font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:10px;}
+.chat-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.chat-del{padding:3px 8px;font-size:10px;border:1px solid rgba(255,61,87,.3);border-radius:3px;background:transparent;color:var(--red);cursor:pointer;}
+.status-msg{font-size:11px;margin-top:6px;}
+.status-ok{color:var(--green);}
+.status-err{color:var(--red);}
+.filter-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:14px;margin-bottom:10px;}
+.filter-title{font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:12px;}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:11px;border:1px dashed var(--border);border-radius:5px;}
+.empty-icon{font-size:24px;margin-bottom:8px;}
+.notif-wrap{position:fixed;top:60px;right:14px;z-index:1000;display:flex;flex-direction:column;gap:5px;max-width:300px;}
+.notif{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:10px 12px;font-size:11px;display:flex;align-items:center;gap:8px;animation:slideIn .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.5);cursor:pointer;white-space:pre-line;}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.notif.long{border-left:3px solid var(--green);}
+.notif.short{border-left:3px solid var(--red);}
+.notif.info{border-left:3px solid var(--accent);}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;}
+.section-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+.sec-label{font-size:9px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.note{font-size:10px;color:var(--text2);line-height:1.6;padding:10px 12px;background:var(--bg4);border-radius:4px;margin-bottom:12px;border:1px solid var(--border);}
+.ck{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.cki{font-size:10px;padding:6px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg4);}
+.cki.on{border-color:rgba(0,200,150,.35);color:var(--green);}
+.cki.off{color:var(--text3);}
+.trade-row{display:grid;grid-template-columns:1fr 70px 70px 70px;gap:6px;font-size:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:center;}
+.mt8{margin-top:8px;}
+.mb8{margin-bottom:8px;}
+.mb12{margin-bottom:12px;}
+.g{color:var(--green);}
+.r{color:var(--red);}
+.y{color:var(--yellow);}
+.a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="topbar">
+  <div>
+    <div class="logo">SIGNAL<span>ULTRA</span></div>
+    <div class="logo-sub">SMC v6 · CLOSED · SWEEP</div>
+  </div>
+  <div class="topbar-prices" id="topPrices"></div>
+  <div class="topbar-right">
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="ws-indicator">
+      <div class="ws-dot" id="wsDot"></div>
+      <div class="ws-label" id="wsLabel">CLOSED 1H</div>
+    </div>
+  </div>
+</div>
+<nav class="nav">
+  <button class="nav-btn active" onclick="goTab('signal',this)">Сигнал</button>
+  <button class="nav-btn" onclick="goTab('scanner',this)">Сканер</button>
+  <button class="nav-btn" onclick="goTab('backtest',this)">Бэктест</button>
+  <button class="nav-btn" onclick="goTab('calc',this)">Калькул.</button>
+  <button class="nav-btn" onclick="goTab('alerts',this)">Алерты</button>
+  <button class="nav-btn" onclick="goTab('telegram',this)">Telegram</button>
+  <button class="nav-btn" onclick="goTab('filters',this)">Фильтры</button>
+</nav>
+<div class="main">
+  <div class="notif-wrap" id="notifWrap"></div>
+
+  <div id="tab-signal" class="section active">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Анализ пары</div>
+        <div class="section-sub">Только закрытые свечи · свип → displacement → FVG/OB</div>
+      </div>
+    </div>
+    <div class="note">Нет сетапа = нет направления. 4H флэт или конфликт — тишина. Лонг только в дисконте, шорт только в премиуме. Вдогонку рынком не входим.</div>
+    <div class="single-controls">
+      <div class="ctrl-group">
+        <div class="ctrl-label">Пара</div>
+        <select class="ctrl-select" id="pairSel"></select>
+      </div>
+      <div class="ctrl-group">
+        <div class="ctrl-label">Плечо · <span class="lev-display" id="levDisplay">5x</span></div>
+        <input type="range" id="levSlider" min="1" max="25" value="5" step="1" oninput="onLevSlide(this.value)">
+        <div class="lev-row" id="levBtns">
+          <button class="lev-q" onclick="setLev(1)">1x</button>
+          <button class="lev-q on" onclick="setLev(5)">5x</button>
+          <button class="lev-q" onclick="setLev(10)">10x</button>
+          <button class="lev-q" onclick="setLev(15)">15x</button>
+        </div>
+      </div>
+    </div>
+    <button class="analyze-btn" id="anaBtn" onclick="doSingle()">Анализ · закрытый 4H+1H</button>
+    <div id="results"><div class="empty"><div class="empty-icon">📊</div>Выбери пару. Сигнал появится только при полном сетапе.</div></div>
+  </div>
+
+  <div id="tab-scanner" class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Авто-сканер</div>
+        <div class="section-sub">По умолчанию BTC и ETH. Альты — только по тренду BTC 4H</div>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-cell"><div class="stat-label">СКАНОВ</div><div class="stat-value sv-y" id="sTot">0</div></div>
+      <div class="stat-cell"><div class="stat-label">ВХОД</div><div class="stat-value sv-p" id="sEnter">0</div></div>
+      <div class="stat-cell"><div class="stat-label">ЖДАТЬ</div><div class="stat-value sv-y" id="sWait">0</div></div>
+      <div class="stat-cell"><div class="stat-label">НЕТ</div><div class="stat-value" id="sNone">0</div></div>
+    </div>
+    <div class="select-row">
+      <button class="mini-btn g" onclick="selectMajors()">BTC+ETH</button>
+      <button class="mini-btn" onclick="selectAll()">Все</button>
+      <button class="mini-btn r" onclick="deselectAll()">Сброс</button>
+    </div>
+    <div class="pair-grid" id="pairGrid"></div>
+    <div class="scan-row mb8">
+      <div class="ctrl-group">
+        <div class="ctrl-label">Интервал</div>
+        <select class="ctrl-select" id="intSel">
+          <option value="60" selected>1 час (закрытие 1H)</option>
+          <option value="240">4 часа</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <div class="ctrl-label">Плечо · <span class="lev-display" id="aLevDisplay">5x</span></div>
+        <input type="range" id="aLevSlider" min="1" max="25" value="5" step="1" oninput="document.getElementById('aLevDisplay').textContent=this.value+'x'">
+      </div>
+    </div>
+    <div class="auto-bar" id="autoBar">
+      <div class="auto-txt" id="autoTxt">Инициализация...</div>
+      <div class="auto-cd" id="cdEl">—</div>
+    </div>
+    <button class="scan-btn" id="autoBtn" onclick="toggleAuto()">Запустить сканер</button>
+    <div class="progress-wrap" id="progWrap">
+      <div class="progress-label">СКАНИРОВАНИЕ</div>
+      <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0"></div></div>
+      <div class="progress-coins" id="progCoins"></div>
+    </div>
+    <div id="autoResults"><div class="empty"><div class="empty-icon">🔍</div>Сканер шлёт в Telegram только входы 5/6+.</div></div>
+  </div>
+
+  <div id="tab-backtest" class="section">
+    <div class="section-title mb8">Бэктест</div>
+    <div class="note">Лимитка в середину FVG/OB. Если SL и TP1 в одной свече — считается SL. Без проскальзывания и комиссий. Таймаут 48 часов 1H. Это hit-rate к TP1, не «магическая уверенность».</div>
+    <div class="calc-row">
+      <div class="input-group">
+        <div class="input-label">Пары</div>
+        <select class="ctrl-select" id="btPairs">
+          <option value="BTCUSDT">BTCUSDT</option>
+          <option value="ETHUSDT">ETHUSDT</option>
+          <option value="BOTH" selected>BTC + ETH</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Период</div>
+        <select class="ctrl-select" id="btDays">
+          <option value="90">90 дней</option>
+          <option value="180" selected>180 дней</option>
+          <option value="365">365 дней</option>
+        </select>
+      </div>
+    </div>
+    <button class="analyze-btn" id="btBtn" onclick="runBacktest()">Запустить бэктест</button>
+    <div class="progress-wrap" id="btProgWrap">
+      <div class="progress-label" id="btProgLabel">ЗАГРУЗКА</div>
+      <div class="progress-track"><div class="progress-fill" id="btFill" style="width:0"></div></div>
+    </div>
+    <div class="stats-bar" id="btStats" style="display:none">
+      <div class="stat-cell"><div class="stat-label">СДЕЛОК</div><div class="stat-value sv-y" id="btN">0</div></div>
+      <div class="stat-cell"><div class="stat-label">WIN TP1</div><div class="stat-value sv-g" id="btW">0</div></div>
+      <div class="stat-cell"><div class="stat-label">HIT-RATE</div><div class="stat-value sv-p" id="btHr">—</div></div>
+      <div class="stat-cell"><div class="stat-label">EXPECT.</div><div class="stat-value" id="btExp">—</div></div>
+    </div>
+    <div id="btExtra"></div>
+    <div id="btList"></div>
+  </div>
+
+  <div id="tab-calc" class="section">
+    <div class="section-title mb8">Калькулятор</div>
+    <div class="calc-tabs">
+      <div class="ctab on" id="ct-M" onclick="swCalc('M')">Сделка+ROI</div>
+      <div class="ctab" id="ct-P" onclick="swCalc('P')">ROI цен</div>
+      <div class="ctab" id="ct-B" onclick="swCalc('B')">Безубыток</div>
+    </div>
+    <div id="cM">
+      <div class="calc-card">
+        <div class="calc-head">Параметры сделки</div>
+        <div class="calc-body">
+          <div class="calc-row">
+            <div class="input-group"><div class="input-label">Депозит (USDT)</div><input class="ctrl-input" type="number" id="cDep" value="1000" oninput="cMain()"></div>
+            <div class="input-group"><div class="input-label">Риск %</div><input class="ctrl-input" type="number" id="cRisk" value="1" step="0.1" oninput="cMain()"></div>
+          </div>
+          <div class="calc-row calc-3">
+            <div class="input-group"><div class="input-label">Плечо</div>
+              <select class="ctrl-select" id="cLev" onchange="cMain()">
+                <option>1</option><option>2</option><option selected>5</option><option>10</option><option>15</option><option>20</option>
+              </select>
+            </div>
+            <div class="input-group"><div class="input-label">RR</div>
+              <select class="ctrl-select" id="cRR" onchange="cMain()">
+                <option value="2" selected>2:1</option><option value="2.5">2.5:1</option><option value="3">3:1</option>
+              </select>
+            </div>
+            <div class="input-group"><div class="input-label">Сделок</div><input class="ctrl-input" type="number" id="cTr" value="20" oninput="cMain()"></div>
+          </div>
+          <div class="calc-row">
+            <div class="input-group"><div class="input-label">Вин-рейт %</div><input class="ctrl-input" type="number" id="cWin" value="55" oninput="cMain()"></div>
+            <div class="input-group"><div class="input-label">Комиссия %</div><input class="ctrl-input" type="number" id="cFee" value="0.05" step="0.01" oninput="cMain()"></div>
+          </div>
+          <div class="calc-result" id="cMRes"></div>
+        </div>
+      </div>
+    </div>
+    <div id="cP" style="display:none">
+      <div class="calc-card">
+        <div class="calc-head">ROI по ценам</div>
+        <div class="calc-body">
+          <div class="calc-row">
+            <div class="input-group"><div class="input-label">Цена входа</div><input class="ctrl-input" type="number" id="rIn" placeholder="67000" oninput="cPrice()"></div>
+            <div class="input-group"><div class="input-label">Цена выхода</div><input class="ctrl-input" type="number" id="rOut" placeholder="68500" oninput="cPrice()"></div>
+          </div>
+          <div class="calc-row">
+            <div class="input-group"><div class="input-label">Плечо</div><select class="ctrl-select" id="rLev" onchange="cPrice()"><option>1</option><option selected>5</option><option>10</option><option>20</option></select></div>
+            <div class="input-group"><div class="input-label">Направление</div><select class="ctrl-select" id="rDir" onchange="cPrice()"><option value="l">LONG</option><option value="s">SHORT</option></select></div>
+          </div>
+          <div class="input-group mb8"><div class="input-label">Сумма USDT</div><input class="ctrl-input" type="number" id="rAmt" placeholder="1000" oninput="cPrice()"></div>
+          <div class="calc-result" id="cPRes"></div>
+        </div>
+      </div>
+    </div>
+    <div id="cB" style="display:none">
+      <div class="calc-card">
+        <div class="calc-head">Точка безубытка</div>
+        <div class="calc-body">
+          <div class="calc-row">
+            <div class="input-group"><div class="input-label">Цена входа</div><input class="ctrl-input" type="number" id="bIn" placeholder="67000" oninput="cBe()"></div>
+            <div class="input-group"><div class="input-label">Плечо</div><select class="ctrl-select" id="bLev" onchange="cBe()"><option>1</option><option selected>5</option><option>10</option><option>20</option></select></div>
+          </div>
+          <div class="calc-row">
+            <div class="input-group"><div class="input-label">Комис. вход %</div><input class="ctrl-input" type="number" id="bF1" value="0.05" step="0.01" oninput="cBe()"></div>
+            <div class="input-group"><div class="input-label">Комис. выход %</div><input class="ctrl-input" type="number" id="bF2" value="0.05" step="0.01" oninput="cBe()"></div>
+          </div>
+          <div class="calc-result" id="cBRes"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-alerts" class="section">
+    <div class="section-title mb8">Оповещения</div>
+    <div class="filter-card">
+      <div class="filter-title">Настройки</div>
+      <div class="alerts-section">
+        <div class="alert-row"><div><b>TP1</b><div style="font-size:10px;color:var(--text2)">Первый тейк</div></div><label class="sw"><input type="checkbox" id="alTp1" checked><span class="sl"></span></label></div>
+        <div class="alert-row"><div><b>TP2</b><div style="font-size:10px;color:var(--text2)">Второй тейк</div></div><label class="sw"><input type="checkbox" id="alTp2" checked><span class="sl"></span></label></div>
+        <div class="alert-row"><div><b>TP3</b><div style="font-size:10px;color:var(--text2)">Третий тейк</div></div><label class="sw"><input type="checkbox" id="alTp3"><span class="sl"></span></label></div>
+        <div class="alert-row"><div><b>Stop Loss</b><div style="font-size:10px;color:var(--text2)">Стоп сработал</div></div><label class="sw"><input type="checkbox" id="alSl" checked><span class="sl"></span></label></div>
+        <div class="alert-row"><div><b>Новый вход</b><div style="font-size:10px;color:var(--text2)">Только canEnter 5/6+</div></div><label class="sw"><input type="checkbox" id="alSig" checked><span class="sl"></span></label></div>
+      </div>
+    </div>
+    <div class="sec-label">Активные</div>
+    <div id="alList"><div class="empty"><div class="empty-icon">🔔</div>Нет активных алертов</div></div>
+    <button class="mini-btn r mt8" onclick="clearAlerts()" style="width:100%;padding:9px;margin-top:10px;">Очистить все</button>
+  </div>
+
+  <div id="tab-telegram" class="section">
+    <div class="section-title mb8">Telegram</div>
+    <div class="note">Токен бота хранится в браузере. Не используй это на чужом компьютере. В Telegram уходят только входы, не «NONE».</div>
+    <div class="tg-card mb8">
+      <div class="tg-title">Добавить чат</div>
+      <div class="input-group mb8"><div class="input-label">Название</div><input class="ctrl-input" type="text" id="ncName" placeholder="Мой канал"></div>
+      <div class="input-group mb8"><div class="input-label">Bot Token</div><input class="ctrl-input" type="text" id="ncToken" placeholder="123456:ABC..."></div>
+      <div class="input-group mb8">
+        <div class="input-label">Chat ID</div>
+        <div style="display:flex;gap:6px">
+          <input class="ctrl-input" type="text" id="ncId" placeholder="-100123456" style="flex:1">
+          <button class="mini-btn" onclick="findId()">Найти</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="mini-btn" onclick="testChat()" style="flex:1;padding:8px">Тест</button>
+        <button class="mini-btn g" onclick="addChat()" style="flex:1;padding:8px">Добавить</button>
+      </div>
+      <div class="status-msg" id="ncSt"></div>
+    </div>
+    <div class="tg-card">
+      <div class="tg-title">Чаты (<span id="chatCnt">0</span>)</div>
+      <div id="chatList"><div class="empty" style="padding:10px;font-size:10px">Нет чатов</div></div>
+    </div>
+  </div>
+
+  <div id="tab-filters" class="section">
+    <div class="section-title mb8">Фильтры сканера</div>
+    <div class="filter-card">
+      <div class="filter-title">Параметры</div>
+      <div class="calc-row mb8">
+        <div class="input-group"><div class="input-label">Мин. чеклист</div>
+          <select class="ctrl-select" id="fConf">
+            <option value="5" selected>5/6 (ChoCH необязателен)</option>
+            <option value="6">6/6 только</option>
+          </select>
+        </div>
+        <div class="input-group"><div class="input-label">Тип</div>
+          <select class="ctrl-select" id="fType"><option value="all">Все</option><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
+        </div>
+      </div>
+      <div class="input-group mb8"><div class="input-label">Карточки WAIT</div>
+        <select class="ctrl-select" id="fWait"><option value="1">Показывать ожидание</option><option value="0">Только входы</option></select>
+      </div>
+      <button class="analyze-btn" onclick="saveFilters()">Сохранить фильтры</button>
+      <div class="status-msg" id="fSt"></div>
+    </div>
+    <div class="note">Правила входа: 1) тренд 4H HH+HL / LH+LL 2) свип EQH/EQL со закрытием обратно 3) displacement + непроторгованный FVG 4) дисконт/премиум 5) ChoCH 1H 6) RR к TP1 ≥ 2. SL за фитилём свипа. Альты без согласия BTC 4H отбрасываются.</div>
+  </div>
+</div>
+</div>
+<script>
+const LS_CHATS = 'signalUltra_v6_chats';
+const LS_ALERTS = 'signalUltra_v6_alerts';
+const LS_FILTERS = 'signalUltra_v6_filters';
+function loadJSON(key, fallback) {
+  try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch(e) { return fallback; }
+}
+function saveJSON(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch(e) {} }
+function escHtml(v) {
+  return String(v).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
+}
+
+let currentLev = 5;
+let autoOn = false;
+let cdIv = null, cdSecs = 0;
+let alerts = loadJSON(LS_ALERTS, {});
+if (!alerts || typeof alerts !== 'object' || Array.isArray(alerts)) alerts = {};
+let chats = loadJSON(LS_CHATS, []);
+if (!Array.isArray(chats)) chats = [];
+let lastSigs = {};
+let allSignals = [];
+let btcBiasCache = { t: 0, bias: 0 };
+let filters = Object.assign({ minCk: 5, type: 'all', showWait: true }, loadJSON(LS_FILTERS, {}));
+
+const PAIRS = [
+  'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','ADAUSDT',
+  'AVAXUSDT','DOGEUSDT','PEPEUSDT','LINKUSDT','LTCUSDT','DOTUSDT',
+  'NEARUSDT','ARBUSDT','OPUSDT','INJUSDT','TRXUSDT','RENDERUSDT',
+  'POLUSDT','ROSEUSDT'
+];
+const MAJORS = new Set(['BTCUSDT','ETHUSDT']);
+let selPairs = new Set(['BTCUSDT','ETHUSDT']);
+
+function toFutSymbol(pair) { return pair === 'PEPEUSDT' ? '1000PEPEUSDT' : pair; }
+function isMajor(pair) { return MAJORS.has(pair); }
+
+function goTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+setInterval(() => {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
+
+async function loadTopPrices() {
+  try {
+    const pairs = ['BTCUSDT','ETHUSDT','SOLUSDT'];
+    const results = await Promise.all(pairs.map(p =>
+      fetch('https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=' + p).then(r => r.json())
+    ));
+    const map = {};
+    results.forEach(d => { if (d && d.symbol) map[d.symbol] = d; });
+    document.getElementById('topPrices').innerHTML = pairs.map(p => {
+      const d = map[p]; if (!d) return '';
+      const chg = parseFloat(d.priceChangePercent);
+      const price = parseFloat(d.lastPrice);
+      const pFmt = price > 1000 ? price.toLocaleString('ru',{maximumFractionDigits:0}) : price.toFixed(4);
+      return '<div class="tp"><span class="tp-sym">' + p.replace('USDT','') + '</span><span class="tp-price">' +
+        pFmt + '</span><span class="tp-chg ' + (chg>=0?'up':'dn') + '">' + (chg>=0?'+':'') + chg.toFixed(2) + '%</span></div>';
+    }).join('');
+  } catch(e) {}
+}
+loadTopPrices();
+setInterval(loadTopPrices, 30000);
+
+function onLevSlide(val) {
+  currentLev = parseInt(val, 10);
+  document.getElementById('levDisplay').textContent = val + 'x';
+  document.querySelectorAll('#levBtns .lev-q').forEach(b => b.classList.toggle('on', b.textContent === val + 'x'));
+}
+function setLev(val) {
+  currentLev = val;
+  document.getElementById('levSlider').value = val;
+  onLevSlide(String(val));
+}
+function getLev() { return currentLev; }
+function getALev() { return parseInt(document.getElementById('aLevSlider').value, 10) || 5; }
+
+function unpack(klines) {
+  const O=[], H=[], L=[], C=[], V=[];
+  for (const k of klines) { O.push(+k[1]); H.push(+k[2]); L.push(+k[3]); C.push(+k[4]); V.push(+k[5]); }
+  return { O, H, L, C, V, n: C.length };
+}
+function trueATR(H, L, C, period) {
+  period = period || 14;
+  if (C.length < 2) return (H[0] - L[0]) || 0;
+  const trs = [];
+  for (let i = 1; i < C.length; i++) {
+    trs.push(Math.max(H[i] - L[i], Math.abs(H[i] - C[i - 1]), Math.abs(L[i] - C[i - 1])));
+  }
+  const slice = trs.slice(-period);
+  return slice.reduce((a, b) => a + b, 0) / slice.length;
+}
+function findSwings(H, L, left, right) {
+  left = left || 2; right = right || 2;
+  const highs = [], lows = [];
+  for (let i = left; i < H.length - right; i++) {
+    let sh = true, sl = true;
+    for (let k = i - left; k <= i + right; k++) {
+      if (k === i) continue;
+      if (H[k] >= H[i]) sh = false;
+      if (L[k] <= L[i]) sl = false;
+    }
+    if (sh) highs.push({ i, price: H[i] });
+    if (sl) lows.push({ i, price: L[i] });
+  }
+  return { highs, lows };
+}
+function structureBias(sw) {
+  const { highs, lows } = sw;
+  if (highs.length < 2 || lows.length < 2) return 0;
+  const hh = highs[highs.length - 1].price > highs[highs.length - 2].price;
+  const hl = lows[lows.length - 1].price > lows[lows.length - 2].price;
+  const lh = highs[highs.length - 1].price < highs[highs.length - 2].price;
+  const ll = lows[lows.length - 1].price < lows[lows.length - 2].price;
+  if (hh && hl) return 1;
+  if (lh && ll) return -1;
+  return 0;
+}
+function lastBOS(C, sw, lookback) {
+  const n = C.length;
+  const lastSH = sw.highs.filter(s => s.i < n - 1).pop();
+  const lastSL = sw.lows.filter(s => s.i < n - 1).pop();
+  let ev = { dir: 0, bar: -1, level: null, name: '—' };
+  const from = Math.max(0, n - (lookback || 10));
+  for (let i = from; i < n; i++) {
+    if (lastSH && C[i] > lastSH.price) ev = { dir: 1, bar: i, level: lastSH.price, name: 'BOS ↑' };
+    if (lastSL && C[i] < lastSL.price) {
+      const cand = { dir: -1, bar: i, level: lastSL.price, name: 'BOS ↓' };
+      if (cand.bar >= ev.bar) ev = cand;
+    }
+  }
+  return ev;
+}
+function detectSweep(H, L, C, sw, lookback, tol) {
+  const n = C.length;
+  const from = Math.max(1, n - lookback);
+  const highs = sw.highs.filter(s => s.i < n - 1 && s.i >= n - 50);
+  const lows = sw.lows.filter(s => s.i < n - 1 && s.i >= n - 50);
+  let best = null;
+  for (let i = from; i < n; i++) {
+    for (const sh of highs) {
+      if (i <= sh.i) continue;
+      const eq = highs.filter(h => Math.abs(h.price - sh.price) / sh.price <= tol).length;
+      if (H[i] > sh.price && C[i] < sh.price) {
+        const s = { dir: -1, bar: i, level: sh.price, extreme: H[i], kind: eq >= 2 ? 'EQH' : 'SwH' };
+        if (!best || i >= best.bar) best = s;
+      }
+    }
+    for (const sl of lows) {
+      if (i <= sl.i) continue;
+      const eq = lows.filter(h => Math.abs(h.price - sl.price) / sl.price <= tol).length;
+      if (L[i] < sl.price && C[i] > sl.price) {
+        const s = { dir: 1, bar: i, level: sl.price, extreme: L[i], kind: eq >= 2 ? 'EQL' : 'SwL' };
+        if (!best || i >= best.bar) best = s;
+      }
+    }
+  }
+  return best;
+}
+function detectDisplacement(O, H, L, C, V, sweep, atr) {
+  if (!sweep) return null;
+  const n = C.length;
+  const volSlice = V.slice(-20);
+  const avgV = volSlice.reduce((a, b) => a + b, 0) / (volSlice.length || 1) || 1;
+  const bodies = [];
+  for (let i = Math.max(1, n - 20); i < n; i++) bodies.push(Math.abs(C[i] - O[i]));
+  const avgB = bodies.reduce((a, b) => a + b, 0) / (bodies.length || 1) || atr;
+  let best = null;
+  for (let i = sweep.bar; i < n; i++) {
+    const dir = C[i] > O[i] ? 1 : C[i] < O[i] ? -1 : 0;
+    if (dir !== sweep.dir) continue;
+    const body = Math.abs(C[i] - O[i]);
+    const range = (H[i] - L[i]) || 1e-12;
+    const closePos = dir === 1 ? (C[i] - L[i]) / range : (H[i] - C[i]) / range;
+    if (body >= Math.max(0.55 * atr, 1.25 * avgB) && closePos >= 0.55) {
+      best = { bar: i, dir, volOk: V[i] >= 1.5 * avgV, volR: V[i] / avgV };
+    }
+  }
+  return best;
+}
+function fvgAround(H, L, disp) {
+  if (!disp) return null;
+  const d = disp.bar;
+  const want = disp.dir === 1 ? 'bull' : 'bear';
+  const cands = [];
+  if (d >= 1 && d + 1 < H.length) {
+    if (L[d + 1] > H[d - 1]) cands.push({ type: 'bull', lo: H[d - 1], hi: L[d + 1], c: d + 1 });
+    if (H[d + 1] < L[d - 1]) cands.push({ type: 'bear', lo: H[d + 1], hi: L[d - 1], c: d + 1 });
+  }
+  if (d >= 2) {
+    if (L[d] > H[d - 2]) cands.push({ type: 'bull', lo: H[d - 2], hi: L[d], c: d });
+    if (H[d] < L[d - 2]) cands.push({ type: 'bear', lo: H[d], hi: L[d - 2], c: d });
+  }
+  return cands.find(f => f.type === want) || null;
+}
+function fvgMitigated(H, L, fvg, fromBar, n) {
+  if (!fvg) return true;
+  for (let i = fromBar + 1; i < n; i++) {
+    if (fvg.type === 'bull' && L[i] <= fvg.lo) return true;
+    if (fvg.type === 'bear' && H[i] >= fvg.hi) return true;
+  }
+  return false;
+}
+function detectOB(O, H, L, C, disp) {
+  if (!disp) return null;
+  for (let i = disp.bar - 1; i >= Math.max(0, disp.bar - 6); i--) {
+    if (disp.dir === 1 && C[i] < O[i]) return { dir: 1, lo: L[i], hi: Math.max(O[i], C[i]), bar: i };
+    if (disp.dir === -1 && C[i] > O[i]) return { dir: -1, lo: Math.min(O[i], C[i]), hi: H[i], bar: i };
+  }
+  return null;
+}
+function detectChoCH(H, L, C, sweep) {
+  if (!sweep) return false;
+  for (let i = sweep.bar + 1; i < C.length; i++) {
+    if (sweep.dir === 1 && C[i] > H[sweep.bar]) return true;
+    if (sweep.dir === -1 && C[i] < L[sweep.bar]) return true;
+  }
+  return false;
+}
+function dealingRange(sw, H, L) {
+  const sh = sw.highs.length ? sw.highs[sw.highs.length - 1].price : Math.max.apply(null, H.slice(-20));
+  const sl = sw.lows.length ? sw.lows[sw.lows.length - 1].price : Math.min.apply(null, L.slice(-20));
+  const hi = Math.max(sh, sl), lo = Math.min(sh, sl);
+  return { hi, lo, mid: (hi + lo) / 2, rng: (hi - lo) || 1 };
+}
+
+function analyzeFromKlines(k1h, k4h, opt) {
+  const pair = opt.pair, lev = opt.lev || 5;
+  const fail = (why) => ({
+    signal: 'NONE', status: 'none', canEnter: false, whyNotEnter: why, confidence: 0,
+    checklist: { htf: false, sweep: false, disp: false, loc: false, choch: false, rr: false },
+    ckScore: 0, qual: 'НЕТ', entry: 0, limitEntry: 0, tp1: 0, tp2: 0, tp3: 0, sl: 0, rr: 0,
+    rrWarn: true, entryType: '—', tfOk: false, tfConflict: false, bos4h: '—', bos1h: '—',
+    sc4h: 0, sc1h: 0, total: 0, price: opt.price || 0, chg: opt.chg || 0, lev,
+    liq: '—', zone: '—', obTxt: 'OB нет', fvgTxt: 'FVG нет', liqCount: 0,
+    support: 0, resistance: 0, slSrc: '—', tp1Src: '—', tp2Src: '—', tp3Src: '—',
+    pctTp1: '—', pctTp2: '—', pctTp3: '—', pctSl: '—', reasoning: why, asset: { label: pair.replace('USDT','') }
+  });
+
+  if (!k1h || k1h.length < 32 || !k4h || k4h.length < 24) return fail('Недостаточно закрытых свечей');
+
+  const a1 = unpack(k1h), a4 = unpack(k4h);
+  const atr = trueATR(a1.H, a1.L, a1.C);
+  const sw1 = findSwings(a1.H, a1.L);
+  const sw4 = findSwings(a4.H, a4.L);
+  const bias4 = structureBias(sw4);
+  const bos4 = lastBOS(a4.C, sw4, 8);
+  const bos1 = lastBOS(a1.C, sw1, 8);
+  const cur = opt.price || a1.C[a1.n - 1];
+  const chg = opt.chg || 0;
+  const tol = isMajor(pair) ? 0.0012 : 0.0025;
+  const rng = dealingRange(sw4, a4.H, a4.L);
+  const sweep = detectSweep(a1.H, a1.L, a1.C, sw1, 14, tol);
+  const disp = detectDisplacement(a1.O, a1.H, a1.L, a1.C, a1.V, sweep, atr);
+  const fvg = fvgAround(a1.H, a1.L, disp);
+  const fvgDead = fvg ? fvgMitigated(a1.H, a1.L, fvg, fvg.c, a1.n) : true;
+  const ob = detectOB(a1.O, a1.H, a1.L, a1.C, disp);
+  const choch = detectChoCH(a1.H, a1.L, a1.C, sweep);
+  const inDiscount = cur <= rng.mid;
+  const inPremium = cur >= rng.mid;
+
+  const ck = { htf: bias4 !== 0, sweep: false, disp: false, loc: false, choch: false, rr: false };
+
+  if (bias4 === 0) return Object.assign(fail('4H флэт — нет HH+HL / LH+LL. Нейтраль.'), {
+    bos4h: bos4.name, bos1h: bos1.name, price: cur, chg, support: rng.lo, resistance: rng.hi,
+    zone: inDiscount ? 'Дисконт' : 'Премиум', reasoning: '4H без чистой структуры. Ждём.'
+  });
+
+  if (typeof opt.btcBias === 'number' && !isMajor(pair) && opt.btcBias !== bias4) {
+    return Object.assign(fail('Альт против тренда BTC 4H — пропуск.'), {
+      bos4h: bos4.name, bos1h: bos1.name, price: cur, chg, support: rng.lo, resistance: rng.hi
+    });
+  }
+
+  if (!sweep) return Object.assign(fail('Нет свипа ликвидности на закрытых 1H.'), {
+    checklist: ck, bos4h: bos4.name, bos1h: bos1.name, price: cur, chg,
+    zone: inDiscount ? 'Дисконт 🟢' : 'Премиум 🔴', support: rng.lo, resistance: rng.hi,
+    reasoning: '4H тренд есть, но 1H не снял EQH/EQL со закрытием обратно.'
+  });
+
+  if (sweep.dir !== bias4) return Object.assign(fail('Свип 1H против тренда 4H — veto.'), {
+    bos4h: bos4.name, bos1h: bos1.name, price: cur, chg, support: rng.lo, resistance: rng.hi,
+    liq: sweep.kind + ' ' + sweep.level.toFixed(4)
+  });
+
+  ck.sweep = true;
+  const dirN = sweep.dir;
+  const dir = dirN === 1 ? 'LONG' : 'SHORT';
+  ck.loc = dirN === 1 ? inDiscount : inPremium;
+  ck.choch = choch;
+  ck.disp = !!(disp && fvg && !fvgDead);
+
+  let zone = null;
+  if (fvg && !fvgDead) zone = { kind: 'FVG', lo: fvg.lo, hi: fvg.hi };
+  else if (ob) zone = { kind: 'OB', lo: ob.lo, hi: ob.hi };
+
+  const fvgTxt = fvg ? ('FVG ' + fvg.type + ' ' + fvg.lo.toFixed(4) + '–' + fvg.hi.toFixed(4) + (fvgDead ? ' (mit)' : '')) : 'FVG нет';
+  const obTxt = ob ? ('OB ' + ob.lo.toFixed(4) + '–' + ob.hi.toFixed(4)) : 'OB нет';
+  const liqTxt = sweep.kind + ' ' + sweep.level.toFixed(4);
+  const zoneTxt = dirN === 1 ? (inDiscount ? 'Дисконт 🟢' : 'Премиум 🔴') : (inPremium ? 'Премиум 🔴' : 'Дисконт 🟢');
+
+  function pack(status, why, extra) {
+    const score = Object.keys(ck).reduce((n, k) => n + (ck[k] ? 1 : 0), 0);
+    const rr = extra && extra.rr != null ? extra.rr : 0;
+    const conf = Math.round(score / 6 * 100);
+    return Object.assign({
+      signal: dir, status, canEnter: status === 'enter', whyNotEnter: why, confidence: conf,
+      checklist: ck, ckScore: score, qual: score === 6 ? 'СИЛЬНЫЙ' : score === 5 ? 'УМЕРЕННЫЙ' : 'СЛАБЫЙ',
+      entry: extra && extra.entry || cur, limitEntry: extra && extra.limit || cur,
+      tp1: extra && extra.tp1 || 0, tp2: extra && extra.tp2 || 0, tp3: extra && extra.tp3 || 0,
+      sl: extra && extra.sl || 0, rr, rrWarn: rr < 2, entryType: zone ? ('ЛИМИТНЫЙ (' + zone.kind + ')') : '—',
+      tfOk: true, tfConflict: false, bos4h: bos4.name, bos1h: bos1.name,
+      sc4h: bias4, sc1h: dirN, total: score, price: cur, chg, lev,
+      liq: liqTxt, zone: zoneTxt, obTxt, fvgTxt, liqCount: 1,
+      support: rng.lo, resistance: rng.hi, slSrc: extra && extra.slSrc || 'за свипом',
+      tp1Src: extra && extra.tp1Src || 'ликв. 4H', tp2Src: '1.5R', tp3Src: '2.2R',
+      pctTp1: extra && extra.p1 || '—', pctTp2: extra && extra.p2 || '—', pctTp3: extra && extra.p3 || '—',
+      pctSl: extra && extra.psl || '—',
+      reasoning: why + ' Чеклист ' + score + '/6. ' + liqTxt + '. ' + fvgTxt + '. ' + zoneTxt +
+        (disp ? (' vol ' + disp.volR.toFixed(2) + 'x') : ''),
+      asset: { label: pair.replace('USDT','') }
+    }, extra || {});
+  }
+
+  if (!disp) return pack('wait', 'Свип есть — ждём displacement (импульс + объём).');
+  if (!fvg || fvgDead) return pack('wait', 'Импульс есть, нет непроторгованного FVG — зона мертва или не сформирована.');
+  if (!ck.loc) return pack('wait', dir === 'LONG' ? 'Цена в премиуме 4H — лонг запрещён.' : 'Цена в дисконте 4H — шорт запрещён.');
+  if (!zone) return pack('wait', 'Нет зоны FVG/OB для лимитки.');
+
+  const chasing = dir === 'LONG' ? cur > zone.hi + 0.3 * atr : cur < zone.lo - 0.3 * atr;
+  const limit = +((zone.lo + zone.hi) / 2).toFixed(8);
+  const entry = chasing ? limit : (cur >= zone.lo && cur <= zone.hi ? cur : limit);
+
+  let sl, slSrc = 'за свипом';
+  if (dir === 'LONG') {
+    sl = sweep.extreme * 0.9988;
+    if (ob) sl = Math.min(sl, ob.lo * 0.9988);
+  } else {
+    sl = sweep.extreme * 1.0012;
+    if (ob) sl = Math.max(sl, ob.hi * 1.0012);
+  }
+  sl = +sl.toFixed(8);
+
+  const slPct = Math.abs(entry - sl) / entry;
+  const maxSl = isMajor(pair) ? 0.015 : 0.028;
+  if (slPct > maxSl) return pack('wait', 'SL слишком широкий (' + (slPct * 100).toFixed(2) + '%) — сетап выкинут.');
+  if (dir === 'LONG' && sl >= entry) return pack('wait', 'SL выше входа — уровни сломаны.');
+  if (dir === 'SHORT' && sl <= entry) return pack('wait', 'SL ниже входа — уровни сломаны.');
+
+  let tp1 = dir === 'LONG' ? rng.hi : rng.lo;
+  const minTpDist = Math.abs(entry - sl) * 2;
+  if (Math.abs(tp1 - entry) < minTpDist) {
+    tp1 = dir === 'LONG' ? entry + minTpDist : entry - minTpDist;
+  }
+  const r1 = Math.abs(tp1 - entry);
+  const tp2 = dir === 'LONG' ? entry + r1 * 1.5 : entry - r1 * 1.5;
+  const tp3 = dir === 'LONG' ? entry + r1 * 2.2 : entry - r1 * 2.2;
+  const rr = +(Math.abs(tp1 - entry) / Math.abs(entry - sl)).toFixed(2);
+  ck.rr = rr >= 2;
+  if (!ck.rr) return pack('wait', 'RR ' + rr.toFixed(2) + ' < 2 — входа нет.', { entry, limit, sl, tp1, tp2, tp3, rr });
+
+  const pctFn = (a, b) => (Math.abs((b - a) / a) * 100 * lev).toFixed(2);
+  const sgn = (a, b) => dir === 'LONG' ? (b > a ? '+' : '-') : (b < a ? '+' : '-');
+  const extra = {
+    entry: +entry.toFixed(8), limit: +limit.toFixed(8), sl, tp1: +tp1.toFixed(8), tp2: +tp2.toFixed(8), tp3: +tp3.toFixed(8), rr,
+    p1: sgn(entry, tp1) + pctFn(entry, tp1) + '%', p2: sgn(entry, tp2) + pctFn(entry, tp2) + '%',
+    p3: sgn(entry, tp3) + pctFn(entry, tp3) + '%', psl: '-' + pctFn(entry, sl) + '%', slSrc
+  };
+
+  const score = Object.keys(ck).reduce((n, k) => n + (ck[k] ? 1 : 0), 0);
+  if (chasing) return pack('wait', 'Цена уже ушла от зоны > 0.3 ATR — не вдогонку, ждём возврат в ' + zone.kind + '.', extra);
+  if (score >= 5) return pack('enter', 'Сетап ' + score + '/6. Лимитка в ' + zone.kind + '.', extra);
+  return pack('wait', 'Чеклист ' + score + '/6 — мало. Нужен ChoCH или объём на импульсе.', extra);
+}
+
+function timeout(ms) { return new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms)); }
+async function fetchClosedKlines(symbol, interval, limit) {
+  const r = await Promise.race([
+    fetch('https://fapi.binance.com/fapi/v1/klines?symbol=' + symbol + '&interval=' + interval + '&limit=' + limit),
+    timeout(12000)
+  ]);
+  const data = await r.json();
+  if (!Array.isArray(data) || data.length < 12) return null;
+  return data.slice(0, -1);
+}
+async function getBtcBias() {
+  if (Date.now() - btcBiasCache.t < 60000 && btcBiasCache.bias !== undefined) return btcBiasCache.bias;
+  const k = await fetchClosedKlines('BTCUSDT', '4h', 80);
+  if (!k) return 0;
+  const bias = structureBias(findSwings(unpack(k).H, unpack(k).L));
+  btcBiasCache = { t: Date.now(), bias };
+  return bias;
+}
+
+async function analyzePair(pair, lev) {
+  const apiPair = toFutSymbol(pair);
+  try {
+    const [k1h, k4h, rp, rv] = await Promise.all([
+      fetchClosedKlines(apiPair, '1h', 120),
+      fetchClosedKlines(apiPair, '4h', 80),
+      Promise.race([fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=' + apiPair), timeout(12000)]).then(r => r.json()),
+      Promise.race([fetch('https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=' + apiPair), timeout(12000)]).then(r => r.json())
+    ]);
+    const price = rp && rp.price ? parseFloat(rp.price) : null;
+    const chg = rv && rv.priceChangePercent ? parseFloat(rv.priceChangePercent) : 0;
+    if (!k1h || !price) return { _unavailable: true, signal: 'N/A', confidence: 0 };
+    const btcBias = pair === 'BTCUSDT' ? undefined : await getBtcBias();
+    return analyzeFromKlines(k1h, k4h, { pair, lev, price, chg, btcBias });
+  } catch (e) {
+    return null;
+  }
+}
+
+function fmt(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  const n = Number(v); if (isNaN(n)) return '—';
+  if (Math.abs(n) > 100000) return n.toLocaleString('ru', { maximumFractionDigits: 0 });
+  if (Math.abs(n) > 1000) return n.toLocaleString('ru', { maximumFractionDigits: 2 });
+  if (Math.abs(n) > 1) return n.toFixed(4);
+  return n.toFixed(6);
+}
+function ckHtml(ck) {
+  if (!ck) return '';
+  const rows = [
+    ['htf', '4H тренд'],
+    ['sweep', 'Свип ликв.'],
+    ['disp', 'Disp + FVG'],
+    ['loc', 'Дисконт/прем.'],
+    ['choch', 'ChoCH 1H'],
+    ['rr', 'RR ≥ 2']
+  ];
+  return '<div class="ck">' + rows.map(([k, l]) =>
+    '<div class="cki ' + (ck[k] ? 'on' : 'off') + '">' + (ck[k] ? '✓ ' : '○ ') + l + '</div>'
+  ).join('') + '</div>';
+}
+
+function buildCard(pair, lev, s) {
+  const isNone = s.signal === 'NONE' || s.status === 'none';
+  const isL = s.signal === 'LONG';
+  const cls = isNone ? 'none' : (isL ? 'long' : 'short');
+  const score = s.ckScore || 0;
+  const cc = score >= 6 ? 'var(--green)' : score >= 5 ? 'var(--yellow)' : 'var(--red)';
+  const confClass = score >= 6 ? 'conf-high' : score >= 5 ? 'conf-mid' : 'conf-low';
+  const chgC = (s.chg || 0) >= 0 ? 'g' : 'r';
+  const chgS = (s.chg || 0) >= 0 ? ('+' + (s.chg || 0).toFixed(2) + '%') : ((s.chg || 0).toFixed(2) + '%');
+  const tf4C = s.sc4h > 0 ? 'tf-bull' : s.sc4h < 0 ? 'tf-bear' : 'tf-neu';
+  const tf1C = s.sc1h > 0 ? 'tf-bull' : s.sc1h < 0 ? 'tf-bear' : 'tf-neu';
+  const now = new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+  let verdictHTML;
+  if (s.canEnter) {
+    verdictHTML = '<div class="verdict enter">ВХОДИТЬ · ' + s.qual + ' · чеклист ' + score + '/6<div class="verdict-sub">Тип: ' +
+      escHtml(s.entryType) + ' · Лимит: <b>' + fmt(s.limitEntry) + '</b></div></div>';
+  } else if (isNone) {
+    verdictHTML = '<div class="verdict stop">НЕТ СЕТАПА · нейтраль<div class="verdict-sub">' + escHtml(s.whyNotEnter) + '</div></div>';
+  } else {
+    verdictHTML = '<div class="verdict wait">ЖДАТЬ · ' + escHtml(s.whyNotEnter) + '</div>';
+  }
+  const tradeBlock = s.canEnter ? (
+    '<a href="#" class="binance-btn" onclick="openBinance(\'' + pair + '\',\'' + s.signal + '\',' +
+      (s.limitEntry || s.entry) + ',' + s.sl + ',' + s.tp1 + ');return false;">Открыть Binance Futures</a>' +
+    '<div class="risk-box">Лимит → <b style="color:var(--accent)">' + fmt(s.limitEntry) + '</b> (середина зоны)<br>' +
+    'Не рынок, если цена ушла.<br>TP1: <b class="g">' + fmt(s.tp1) + '</b> · TP2: <b class="g">' + fmt(s.tp2) +
+    '</b> · TP3: <b class="g">' + fmt(s.tp3) + '</b><br>SL: <b class="r">' + fmt(s.sl) + '</b> (' + escHtml(s.slSrc) +
+    ')<br><span style="font-size:10px;color:var(--text3)">После TP1 — SL в безубыток. Риск 0.5–1% депо.</span></div>'
+  ) : '';
+  const levels = (!isNone && s.sl) ? (
+    '<table class="levels-table"><tr><th>Уровень</th><th>Цена</th><th>% (' + lev + 'x)</th><th>Источник</th></tr>' +
+    '<tr><td>Вход</td><td class="td-yellow">' + fmt(s.entry) + '</td><td>—</td><td style="font-size:9px;color:var(--text2)">' + escHtml(s.entryType) + '</td></tr>' +
+    '<tr><td>TP1</td><td class="td-green">' + fmt(s.tp1) + '</td><td class="td-green">' + escHtml(s.pctTp1) + '</td><td style="font-size:9px;color:var(--text2)">' + escHtml(s.tp1Src) + '</td></tr>' +
+    '<tr><td>TP2</td><td class="td-green">' + fmt(s.tp2) + '</td><td class="td-green">' + escHtml(s.pctTp2) + '</td><td style="font-size:9px;color:var(--text2)">' + escHtml(s.tp2Src) + '</td></tr>' +
+    '<tr><td>TP3</td><td class="td-green">' + fmt(s.tp3) + '</td><td class="td-green">' + escHtml(s.pctTp3) + '</td><td style="font-size:9px;color:var(--text2)">' + escHtml(s.tp3Src) + '</td></tr>' +
+    '<tr><td>SL</td><td class="td-red">' + fmt(s.sl) + '</td><td class="td-red">' + escHtml(s.pctSl) + '</td><td style="font-size:9px;color:var(--text2)">' + escHtml(s.slSrc) + '</td></tr>' +
+    '<tr><td style="color:var(--text2)">4H low</td><td class="td-mono">' + fmt(s.support) + '</td><td>—</td><td style="font-size:9px;color:var(--text2)">SwLow</td></tr>' +
+    '<tr><td style="color:var(--text2)">4H high</td><td class="td-mono">' + fmt(s.resistance) + '</td><td>—</td><td style="font-size:9px;color:var(--text2)">SwHigh</td></tr></table>'
+  ) : '';
+
+  return '<div class="signal-card ' + cls + '"><div class="sc-head"><div><div class="sc-pair">' + escHtml(pair) +
+    ' · <span style="color:var(--text2);font-size:12px">' + lev + 'x</span></div><div class="sc-meta">закрытые 4H+1H · ' + now +
+    '</div></div><div class="sc-dir ' + cls + '">' + escHtml(s.signal) + '</div></div><div class="sc-body">' + verdictHTML + tradeBlock +
+    '<div class="tf-bar"><div class="tf-box ' + tf4C + '"><div class="tf-lbl">4H ТРЕНД</div><div class="tf-val">' +
+    (s.sc4h > 0 ? 'HH+HL' : s.sc4h < 0 ? 'LH+LL' : 'ФЛЭТ') + '</div></div><div class="tf-box ' + tf1C +
+    '"><div class="tf-lbl">1H BOS</div><div class="tf-val">' + escHtml(s.bos1h || '—') + '</div></div><div class="tf-box ' +
+    (s.tfOk ? 'tf-bull' : 'tf-neu') + '"><div class="tf-lbl">ALIGN</div><div class="tf-val">' + (isNone ? 'НЕТ' : '4H veto OK') +
+    '</div></div></div>' + ckHtml(s.checklist) + levels +
+    '<div style="display:flex;gap:8px;font-size:11px"><div style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:7px 10px"><span style="color:var(--text2)">Цена </span><b>' +
+    fmt(s.price) + '</b></div><div style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:7px 10px"><span style="color:var(--text2)">24ч </span><b class="' +
+    chgC + '">' + chgS + '</b></div></div><div class="inds"><span class="ind ' + (s.liq && s.liq !== '—' ? 'ind-bull' : 'ind-neu') + '">' +
+    escHtml(s.liq || 'Ликв нет') + '</span><span class="ind ind-yellow">' + escHtml(s.zone || '—') + '</span><span class="ind ind-yellow">' +
+    escHtml(s.obTxt) + '</span><span class="ind ind-yellow">' + escHtml(s.fvgTxt) + '</span></div><div class="rr-badges"><span class="badge badge-rr">Чеклист ' +
+    score + '/6</span>' + (s.rr ? '<span class="badge badge-rr">RR ' + s.rr + ':1</span>' : '') +
+    (s.rr && s.rr >= 2 ? '<span class="badge badge-ok">RR ок</span>' : '<span class="badge badge-warn">RR фильтр</span>') +
+    '</div><div class="conf-row"><div class="conf-bar"><div class="conf-fill ' + confClass + '" style="width:' + (score / 6 * 100) +
+    '%"></div></div><div class="conf-pct" style="color:' + cc + '">' + score + '/6</div></div><div class="reasoning">' +
+    escHtml(s.reasoning || '—') + '</div></div></div>';
+}
+
+async function doSingle() {
+  const pair = document.getElementById('pairSel').value;
+  const lev = getLev();
+  const btn = document.getElementById('anaBtn');
+  btn.textContent = 'Считаем закрытые свечи...';
+  btn.disabled = true;
+  const sig = await analyzePair(pair, lev);
+  document.getElementById('results').innerHTML = sig && !sig._unavailable
+    ? buildCard(pair, lev, sig)
+    : '<div class="empty"><div class="empty-icon">⚠️</div>Нет данных Binance. Проверь сеть.</div>';
+  btn.textContent = 'Анализ · закрытый 4H+1H';
+  btn.disabled = false;
+}
+
+function buildGrid() {
+  document.getElementById('pairSel').innerHTML = PAIRS.map(p => '<option' + (p === 'BTCUSDT' ? ' selected' : '') + '>' + p + '</option>').join('');
+  document.getElementById('pairGrid').innerHTML = PAIRS.map(p =>
+    '<div class="pair-chip ' + (selPairs.has(p) ? 'on' : '') + '" id="ch_' + p + '" onclick="togglePair(\'' + p + '\')">' + p.replace('USDT', '') + '</div>'
+  ).join('');
+}
+function togglePair(p) {
+  if (selPairs.has(p)) { selPairs.delete(p); document.getElementById('ch_' + p).className = 'pair-chip'; }
+  else { selPairs.add(p); document.getElementById('ch_' + p).className = 'pair-chip on'; }
+}
+function selectAll() { PAIRS.forEach(p => { selPairs.add(p); const c = document.getElementById('ch_' + p); if (c) c.className = 'pair-chip on'; }); }
+function selectMajors() {
+  selPairs = new Set(['BTCUSDT', 'ETHUSDT']);
+  PAIRS.forEach(p => { const c = document.getElementById('ch_' + p); if (c) c.className = 'pair-chip' + (selPairs.has(p) ? ' on' : ''); });
+}
+function deselectAll() { selPairs.clear(); PAIRS.forEach(p => { const c = document.getElementById('ch_' + p); if (c) c.className = 'pair-chip'; }); }
+
+function toggleAuto() {
+  if (autoOn) {
+    autoOn = false;
+    clearInterval(cdIv);
+    document.getElementById('autoBtn').textContent = 'Запустить сканер';
+    document.getElementById('autoBar').style.display = 'none';
+    document.getElementById('progWrap').style.display = 'none';
+    document.getElementById('wsDot').classList.remove('on');
+  } else {
+    if (!selPairs.size) { showNotif('Выбери монеты', 'info'); return; }
+    autoOn = true;
+    document.getElementById('autoBtn').textContent = 'Остановить';
+    document.getElementById('autoBar').style.display = 'flex';
+    runAuto();
+  }
+}
+
+async function runAuto() {
+  if (!autoOn) return;
+  const pairs = [...selPairs];
+  const lev = getALev();
+  const mins = parseInt(document.getElementById('intSel').value, 10);
+  document.getElementById('autoResults').innerHTML = '';
+  document.getElementById('progWrap').style.display = 'block';
+  document.getElementById('wsDot').classList.remove('on');
+  allSignals = [];
+  let ent = 0, wait = 0, none = 0;
+  await getBtcBias();
+
+  for (let i = 0; i < pairs.length; i++) {
+    if (!autoOn) break;
+    const p = pairs[i];
+    const ch = document.getElementById('ch_' + p);
+    if (ch) ch.className = 'pair-chip busy';
+    document.getElementById('autoTxt').textContent = p + ' (' + (i + 1) + '/' + pairs.length + ')';
+    document.getElementById('progFill').style.width = ((i + 1) / pairs.length * 100) + '%';
+    document.getElementById('progCoins').textContent = (i + 1) + ' / ' + pairs.length;
+
+    const sig = await analyzePair(p, lev);
+    if (sig && !sig._unavailable) {
+      if (sig.canEnter) ent++;
+      else if (sig.status === 'wait') wait++;
+      else none++;
+      const pass = sig.canEnter && sig.ckScore >= (filters.minCk || 5) && (filters.type === 'all' || sig.signal === filters.type);
+      const key = p + ':' + (sig.canEnter ? sig.signal : 'NONE');
+      const changed = lastSigs[p] !== key;
+      if (pass && changed && alCfg().sig) await sendAll(p, lev, sig);
+      if (sig.canEnter) regAlert(p, lev, sig);
+      lastSigs[p] = key;
+      allSignals.push({ pair: p, lev, sig });
+      const show = sig.canEnter || (filters.showWait && sig.status === 'wait');
+      if (show) {
+        const res = document.getElementById('autoResults');
+        if (res.querySelector('.empty')) res.innerHTML = '';
+        res.insertAdjacentHTML('afterbegin', buildCard(p, lev, sig));
+      }
+      if (ch) {
+        ch.className = 'pair-chip ' + (sig.canEnter ? (sig.signal === 'LONG' ? 'dl' : 'ds') : 'none');
+        ch.textContent = p.replace('USDT', '') + (sig.canEnter ? (sig.signal === 'LONG' ? ' ↑' : ' ↓') : ' ·');
+      }
+    }
+    document.getElementById('sTot').textContent = String(i + 1);
+    document.getElementById('sEnter').textContent = String(ent);
+    document.getElementById('sWait').textContent = String(wait);
+    document.getElementById('sNone').textContent = String(none);
+    await new Promise(r => setTimeout(r, 450));
+  }
+
+  document.getElementById('wsDot').classList.add('on');
+  document.getElementById('progWrap').style.display = 'none';
+  showBestSignal();
+  cdSecs = mins * 60;
+  clearInterval(cdIv);
+  cdIv = setInterval(() => {
+    if (!autoOn) { clearInterval(cdIv); return; }
+    cdSecs--;
+    const m = Math.floor(cdSecs / 60), s = cdSecs % 60;
+    document.getElementById('cdEl').textContent = m + ':' + String(s).padStart(2, '0');
+    document.getElementById('autoTxt').textContent = 'Следующий скан';
+    if (cdSecs <= 0) { clearInterval(cdIv); if (autoOn) runAuto(); }
+  }, 1000);
+}
+
+function showBestSignal() {
+  const pool = allSignals.filter(({ sig }) => sig && sig.canEnter);
+  const old = document.getElementById('bestBanner'); if (old) old.remove();
+  if (!pool.length) return;
+  pool.sort((a, b) => (b.sig.ckScore - a.sig.ckScore) || (b.sig.rr - a.sig.rr));
+  const { pair, lev, sig } = pool[0];
+  const isL = sig.signal === 'LONG';
+  const banner = document.createElement('div');
+  banner.id = 'bestBanner';
+  banner.className = 'best-banner ' + (isL ? 'long' : 'short');
+  banner.innerHTML = '<div class="best-title">Лучший сетап</div><div style="display:flex;align-items:center;justify-content:space-between"><div><span class="best-pair">' +
+    escHtml(pair) + '</span><span class="sc-dir ' + (isL ? 'long' : 'short') + '" style="margin-left:8px;font-size:12px">' + sig.signal +
+    '</span></div><span style="color:var(--purple);font-weight:700">' + sig.ckScore + '/6 · RR ' + sig.rr + ':1</span></div><div class="best-info">Лимит: <b>' +
+    fmt(sig.limitEntry) + '</b> · TP1 <b class="g">' + fmt(sig.tp1) + '</b> · SL <b class="r">' + fmt(sig.sl) + '</b></div>' +
+    '<a href="#" class="binance-btn" style="margin-top:10px" onclick="openBinance(\'' + pair + '\',\'' + sig.signal + '\',' +
+    (sig.limitEntry || sig.entry) + ',' + sig.sl + ',' + sig.tp1 + ');return false;">Открыть Binance Futures</a>';
+  document.getElementById('autoResults').insertAdjacentElement('beforebegin', banner);
+}
+
+function openBinance(pair, side, entry, sl, tp1) {
+  const sym = toFutSymbol(pair);
+  const webUrl = 'https://www.binance.com/en/futures/' + sym;
+  showNotif('Binance · ' + pair + ' ' + side, side === 'LONG' ? 'long' : 'short');
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/i.test(ua)) { window.location.href = 'bnc://futures/' + sym; setTimeout(() => { window.location.href = webUrl; }, 1500); return; }
+  if (/Android/i.test(ua)) {
+    window.location.href = 'intent://futures/' + sym + '#Intent;scheme=bnc;package=com.binance.dev;S.browser_fallback_url=' + encodeURIComponent(webUrl) + ';end';
+    setTimeout(() => { if (!document.hidden) window.open(webUrl, '_blank'); }, 2000); return;
+  }
+  window.open(webUrl, '_blank');
+}
+
+function alCfg() {
+  return {
+    tp1: document.getElementById('alTp1').checked,
+    tp2: document.getElementById('alTp2').checked,
+    tp3: document.getElementById('alTp3').checked,
+    sl: document.getElementById('alSl').checked,
+    sig: document.getElementById('alSig').checked
+  };
+}
+function regAlert(pair, lev, sig) {
+  alerts[pair] = { signal: sig.signal, tp1: sig.tp1, tp2: sig.tp2, tp3: sig.tp3, sl: sig.sl, lev, pctTp1: sig.pctTp1, pctTp2: sig.pctTp2, pctTp3: sig.pctTp3, pctSl: sig.pctSl, h1: false, h2: false, h3: false, hs: false, time: new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }), api: toFutSymbol(pair) };
+  saveJSON(LS_ALERTS, alerts);
+  renderAlerts();
+}
+function clearAlerts() { alerts = {}; saveJSON(LS_ALERTS, alerts); renderAlerts(); }
+function removeAlert(pair) { delete alerts[pair]; saveJSON(LS_ALERTS, alerts); renderAlerts(); }
+function renderAlerts() {
+  const el = document.getElementById('alList'), keys = Object.keys(alerts);
+  if (!keys.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div>Нет активных</div>'; return; }
+  el.innerHTML = keys.map(p => {
+    const a = alerts[p];
+    return '<div class="alert-item-row"><div><b>' + escHtml(p.replace('USDT', '')) + '</b> ' + escHtml(a.signal) + ' ' + escHtml(a.lev) +
+      'x<div style="font-size:9px;color:var(--text2)">' + escHtml(a.time) + '</div></div><div class="alert-tags"><span class="tag ' +
+      (a.h1 ? 'tag-ok' : 'tag-no') + '">TP1</span><span class="tag ' + (a.h2 ? 'tag-ok' : 'tag-no') + '">TP2</span><span class="tag ' +
+      (a.h3 ? 'tag-ok' : 'tag-no') + '">TP3</span><span class="tag ' + (a.hs ? 'tag-sl' : 'tag-no') + '">SL</span>' +
+      '<button class="del-btn" onclick="removeAlert(\'' + p + '\')">✕</button></div></div>';
+  }).join('');
+}
+async function checkAlerts() {
+  const cfg = alCfg();
+  for (const pair of Object.keys(alerts)) {
+    const a = alerts[pair]; if (a.h1 && a.h2 && a.h3 && a.hs) continue;
+    try {
+      const r = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=' + (a.api || toFutSymbol(pair)));
+      const d = await r.json(); const px = parseFloat(d.price);
+      const isL = a.signal === 'LONG';
+      const ht = lv => isL ? px >= lv : px <= lv;
+      const hs = lv => isL ? px <= lv : px >= lv;
+      if (cfg.tp1 && !a.h1 && a.tp1 && ht(a.tp1)) { a.h1 = true; await bcast('TP1 · ' + pair + ' · ' + a.signal + ' ' + a.lev + 'x\n' + px); }
+      if (cfg.tp2 && !a.h2 && a.tp2 && ht(a.tp2)) { a.h2 = true; await bcast('TP2 · ' + pair + ' · ' + a.signal + ' ' + a.lev + 'x\n' + px); }
+      if (cfg.tp3 && !a.h3 && a.tp3 && ht(a.tp3)) { a.h3 = true; await bcast('TP3 · ' + pair + ' · ' + a.signal + ' ' + a.lev + 'x\n' + px); }
+      if (cfg.sl && !a.hs && a.sl && hs(a.sl)) { a.hs = true; await bcast('СТОП · ' + pair + ' · ' + a.signal + ' ' + a.lev + 'x\n' + px); }
+    } catch (e) {}
+  }
+  saveJSON(LS_ALERTS, alerts);
+  renderAlerts();
+}
+setInterval(checkAlerts, 30000);
+
+async function bcast(msg) {
+  for (const c of chats) {
+    try {
+      await fetch('https://api.telegram.org/bot' + c.token + '/sendMessage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: c.id, text: msg, parse_mode: 'HTML' })
+      });
+    } catch (e) {}
+  }
+}
+async function sendAll(pair, lev, sig) {
+  if (!chats.length || !sig.canEnter) return;
+  const icon = sig.signal === 'LONG' ? '🟢' : '🔴';
+  const msg = icon + ' <b>' + sig.signal + '</b> · <b>' + pair + '</b> · ' + lev + 'x\n✅ ВХОД · чеклист ' + sig.ckScore +
+    '/6\n4H: ' + (sig.sc4h > 0 ? 'бычий' : 'медвежий') + ' · 1H: ' + sig.bos1h +
+    '\n─────────────\nЛимит: <b>' + fmt(sig.limitEntry) + '</b>\nTP1: ' + fmt(sig.tp1) + ' → <b>' + sig.pctTp1 +
+    '</b>\nSL: ' + fmt(sig.sl) + ' → <b>' + sig.pctSl + '</b>\nRR: ' + sig.rr + ':1\n' + sig.liq + ' · ' + sig.zone;
+  await bcast(msg);
+}
+function setStatus(el, msg, type) {
+  el.textContent = msg; el.className = 'status-msg' + (type === 'ok' ? ' status-ok' : type === 'err' ? ' status-err' : '');
+}
+async function findId() {
+  const token = document.getElementById('ncToken').value.trim(), st = document.getElementById('ncSt');
+  if (!token) { setStatus(st, 'Введи токен', 'err'); return; }
+  setStatus(st, 'Поиск...', '');
+  try {
+    const r = await fetch('https://api.telegram.org/bot' + token + '/getUpdates'); const d = await r.json();
+    if (!d.ok) { setStatus(st, 'Неверный токен', 'err'); return; }
+    if (!d.result || !d.result.length) { setStatus(st, 'Напиши боту /start и нажми снова', 'err'); return; }
+    const id = d.result[d.result.length - 1].message.chat.id;
+    document.getElementById('ncId').value = id; setStatus(st, 'Chat ID: ' + id, 'ok');
+  } catch (e) { setStatus(st, 'Ошибка', 'err'); }
+}
+async function testChat() {
+  const token = document.getElementById('ncToken').value.trim(), id = document.getElementById('ncId').value.trim(), st = document.getElementById('ncSt');
+  if (!token || !id) { setStatus(st, 'Заполни поля', 'err'); return; }
+  try {
+    const r = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: id, text: 'SIGNAL ULTRA v6 · SMC closed-bar', parse_mode: 'HTML' })
+    });
+    const d = await r.json(); d.ok ? setStatus(st, 'Отправлено', 'ok') : setStatus(st, 'Ошибка: ' + d.description, 'err');
+  } catch (e) { setStatus(st, 'Ошибка', 'err'); }
+}
+function addChat() {
+  const name = document.getElementById('ncName').value.trim(), token = document.getElementById('ncToken').value.trim(), id = document.getElementById('ncId').value.trim(), st = document.getElementById('ncSt');
+  if (!name || !token || !id) { setStatus(st, 'Заполни все поля', 'err'); return; }
+  chats.push({ name, token, id });
+  saveJSON(LS_CHATS, chats);
+  ['ncName', 'ncToken', 'ncId'].forEach(x => document.getElementById(x).value = '');
+  setStatus(st, 'Добавлен: ' + name, 'ok'); renderChats();
+}
+function removeChat(i) { chats.splice(i, 1); saveJSON(LS_CHATS, chats); renderChats(); }
+function renderChats() {
+  document.getElementById('chatCnt').textContent = chats.length;
+  const el = document.getElementById('chatList');
+  if (!chats.length) { el.innerHTML = '<div class="empty" style="padding:8px;font-size:10px">Нет чатов</div>'; return; }
+  el.innerHTML = chats.map((c, i) => '<div class="chat-row"><div style="flex:1"><div style="font-size:12px;font-weight:700">' +
+    escHtml(c.name) + '</div><div style="font-size:10px;color:var(--text2)">' + escHtml(c.id) +
+    '</div></div><button class="chat-del" onclick="removeChat(' + i + ')">Удалить</button></div>').join('');
+}
+
+function swCalc(m) {
+  ['M', 'P', 'B'].forEach(x => {
+    document.getElementById('c' + x).style.display = x === m ? '' : 'none';
+    document.getElementById('ct-' + x).className = 'ctab' + (x === m ? ' on' : '');
+  });
+}
+function cr(l, v, c) { return '<div class="crow"><span>' + l + '</span><span class="' + (c || '') + '">' + v + '</span></div>'; }
+function cMain() {
+  const dep = +document.getElementById('cDep').value || 1000, risk = +document.getElementById('cRisk').value || 1,
+    lev = +document.getElementById('cLev').value || 5, rr = +document.getElementById('cRR').value || 2,
+    tr = +document.getElementById('cTr').value || 20, win = +document.getElementById('cWin').value || 55,
+    fee = +document.getElementById('cFee').value || 0.05;
+  const rU = dep * risk / 100, vol = rU * lev, feeU = vol * (fee / 100) * 2;
+  const nTP1 = rU * rr - feeU, nSL = rU + feeU;
+  const wins = Math.round(tr * win / 100), losses = tr - wins;
+  const profit = wins * nTP1 - losses * nSL, roi = (profit / dep * 100);
+  const exp = nTP1 * (win / 100) - nSL * ((100 - win) / 100);
+  const minW = Math.ceil(nSL / (nTP1 + nSL) * 100);
+  document.getElementById('cMRes').innerHTML =
+    cr('Риск', rU.toFixed(2) + ' USDT') + cr('Объём', vol.toLocaleString('ru') + ' USDT') + cr('Комиссия', feeU.toFixed(3) + ' USDT') +
+    cr('TP RR' + rr, '+' + nTP1.toFixed(2), 'cg') + cr('SL', '-' + nSL.toFixed(2), 'cr') +
+    cr('Побед / лоссов', wins + ' / ' + losses) + cr('Ожидание/сделку', exp.toFixed(2), exp > 0 ? 'cg' : 'cr') +
+    cr('Итого', (profit >= 0 ? '+' : '') + profit.toFixed(2), profit >= 0 ? 'cg' : 'cr') +
+    cr('ROI серии', (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%', roi >= 0 ? 'cg' : 'cr') +
+    cr('Мин. вин-рейт', minW + '%', 'cp');
+}
+function cPrice() {
+  const ein = +document.getElementById('rIn').value || 0, eout = +document.getElementById('rOut').value || 0,
+    lev = +document.getElementById('rLev').value || 5, dir = document.getElementById('rDir').value,
+    amt = +document.getElementById('rAmt').value || 0;
+  if (!ein || !eout) return;
+  const diff = dir === 'l' ? eout - ein : ein - eout, pct = diff / ein * 100, roi = pct * lev;
+  const pnl = amt ? amt * roi / 100 : null, liqP = dir === 'l' ? ein * (1 - 1 / lev) : ein * (1 + 1 / lev);
+  document.getElementById('cPRes').innerHTML =
+    cr('Движение', (diff >= 0 ? '+' : '') + diff.toFixed(4) + ' (' + pct.toFixed(3) + '%)', diff >= 0 ? 'cg' : 'cr') +
+    cr('ROI x' + lev, (roi >= 0 ? '+' : '') + roi.toFixed(2) + '%', roi >= 0 ? 'cg' : 'cr') +
+    (pnl !== null ? cr('P&L', (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + ' USDT', pnl >= 0 ? 'cg' : 'cr') : '') +
+    cr('Ликвидация', liqP.toFixed(4), 'cr');
+}
+function cBe() {
+  const ein = +document.getElementById('bIn').value || 0, lev = +document.getElementById('bLev').value || 5,
+    f1 = +document.getElementById('bF1').value || 0.05, f2 = +document.getElementById('bF2').value || 0.05;
+  if (!ein) return;
+  const tot = f1 + f2, mov = tot / lev;
+  document.getElementById('cBRes').innerHTML =
+    cr('Комиссия итого', tot.toFixed(3) + '%') + cr('Нужное движение', mov.toFixed(4) + '%') +
+    cr('LONG BE', (ein * (1 + mov / 100)).toFixed(4), 'cg') + cr('SHORT BE', (ein * (1 - mov / 100)).toFixed(4), 'cg');
+}
+
+function saveFilters() {
+  filters.minCk = parseInt(document.getElementById('fConf').value, 10);
+  filters.type = document.getElementById('fType').value;
+  filters.showWait = document.getElementById('fWait').value === '1';
+  saveJSON(LS_FILTERS, filters);
+  setStatus(document.getElementById('fSt'), 'Сохранено', 'ok');
+}
+
+function showNotif(msg, type) {
+  type = type || 'info';
+  const wrap = document.getElementById('notifWrap');
+  const el = document.createElement('div');
+  el.className = 'notif ' + type;
+  el.textContent = (type === 'long' ? '↑ ' : type === 'short' ? '↓ ' : '') + msg;
+  el.onclick = () => el.remove();
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+async function fetchKlinesRange(symbol, interval, days) {
+  const ms = interval === '1h' ? 3600000 : 14400000;
+  const need = Math.ceil(days * 24 * 3600000 / ms) + 10;
+  const out = [];
+  let endTime = Date.now();
+  while (out.length < need) {
+    const url = 'https://fapi.binance.com/fapi/v1/klines?symbol=' + symbol + '&interval=' + interval + '&limit=1500&endTime=' + endTime;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length) break;
+    out.unshift.apply(out, data);
+    endTime = data[0][0] - 1;
+    if (data.length < 1500) break;
+    await new Promise(res => setTimeout(res, 180));
+  }
+  const map = new Map();
+  for (const k of out) map.set(k[0], k);
+  const arr = [...map.values()].sort((a, b) => a[0] - b[0]);
+  if (arr.length > 1) arr.pop();
+  return arr;
+}
+
+function simulatePair(pair, k1h, k4h, onProg) {
+  const trades = [];
+  let open = null;
+  const minI = 80;
+  for (let i = minI; i < k1h.length; i++) {
+    if (onProg && i % 40 === 0) onProg(i / k1h.length);
+    const bar = k1h[i];
+    const H = +bar[2], L = +bar[3], C = +bar[4];
+    if (open) {
+      if (!open.filled) {
+        if (L <= open.entry && H >= open.entry) { open.filled = true; open.fillBar = i; }
+        else if (i - open.signalBar > 12) { open = null; }
+        continue;
+      }
+      const hitSL = open.dir === 'LONG' ? L <= open.sl : H >= open.sl;
+      const hitTP = open.dir === 'LONG' ? H >= open.tp1 : L <= open.tp1;
+      if (hitSL && hitTP) { open.result = 'SL'; open.exit = open.sl; trades.push(open); open = null; continue; }
+      if (hitSL) { open.result = 'SL'; open.exit = open.sl; trades.push(open); open = null; continue; }
+      if (hitTP) { open.result = 'TP1'; open.exit = open.tp1; trades.push(open); open = null; continue; }
+      if (i - open.fillBar >= 48) { open.result = 'TIME'; open.exit = C; trades.push(open); open = null; }
+      continue;
+    }
+    const closeTime = bar[6];
+    const w1 = k1h.slice(Math.max(0, i - 119), i + 1);
+    const w4 = k4h.filter(k => k[6] <= closeTime).slice(-80);
+    if (w4.length < 24) continue;
+    const sig = analyzeFromKlines(w1, w4, { pair, lev: 5, price: C, chg: 0 });
+    if (sig && sig.canEnter) {
+      open = {
+        pair, dir: sig.signal, entry: sig.limitEntry || sig.entry, sl: sig.sl, tp1: sig.tp1, rr: sig.rr,
+        ck: sig.ckScore, signalBar: i, filled: false, time: new Date(bar[0]).toISOString().slice(0, 16).replace('T', ' ')
+      };
+    }
+  }
+  if (open && open.filled) { open.result = 'OPEN'; trades.push(open); }
+  return trades;
+}
+
+async function runBacktest() {
+  const btn = document.getElementById('btBtn');
+  btn.disabled = true; btn.textContent = 'Грузим историю Binance...';
+  document.getElementById('btProgWrap').style.display = 'block';
+  document.getElementById('btStats').style.display = 'none';
+  document.getElementById('btList').innerHTML = '';
+  document.getElementById('btExtra').innerHTML = '';
+  const sel = document.getElementById('btPairs').value;
+  const days = parseInt(document.getElementById('btDays').value, 10);
+  const pairs = sel === 'BOTH' ? ['BTCUSDT', 'ETHUSDT'] : [sel];
+  try {
+    let all = [];
+    for (let p = 0; p < pairs.length; p++) {
+      const pair = pairs[p];
+      document.getElementById('btProgLabel').textContent = 'Свечи ' + pair;
+      document.getElementById('btFill').style.width = ((p / pairs.length) * 40) + '%';
+      const [k1h, k4h] = await Promise.all([fetchKlinesRange(pair, '1h', days), fetchKlinesRange(pair, '4h', days + 20)]);
+      document.getElementById('btProgLabel').textContent = 'Симуляция ' + pair + ' · ' + k1h.length + ' баров';
+      const trades = simulatePair(pair, k1h, k4h, frac => {
+        document.getElementById('btFill').style.width = (40 + (p + frac) / pairs.length * 60) + '%';
+      });
+      all = all.concat(trades);
+    }
+    const done = all.filter(t => t.result === 'TP1' || t.result === 'SL');
+    const wins = done.filter(t => t.result === 'TP1');
+    const losses = done.filter(t => t.result === 'SL');
+    const times = all.filter(t => t.result === 'TIME');
+    const hr = done.length ? (wins.length / done.length * 100) : 0;
+    let exp = 0, streak = 0, maxStreak = 0;
+    for (const t of done) {
+      if (t.result === 'SL') { exp -= 1; streak += 1; maxStreak = Math.max(maxStreak, streak); }
+      else { exp += (t.rr || 2); streak = 0; }
+    }
+    const expectancy = done.length ? exp / done.length : 0;
+    document.getElementById('btN').textContent = String(done.length);
+    document.getElementById('btW').textContent = String(wins.length);
+    document.getElementById('btHr').textContent = done.length ? (hr.toFixed(1) + '%') : '—';
+    const expEl = document.getElementById('btExp');
+    expEl.textContent = (expectancy >= 0 ? '+' : '') + expectancy.toFixed(2) + 'R';
+    expEl.className = 'stat-value ' + (expectancy >= 0 ? 'sv-g' : 'sv-r');
+    document.getElementById('btStats').style.display = 'grid';
+    document.getElementById('btExtra').innerHTML = '<div class="note">Лоссов: ' + losses.length +
+      ' · таймаутов: ' + times.length + ' · макс. серия лоссов: ' + maxStreak +
+      ' · ср. RR побед: ' + (wins.length ? (wins.reduce((a, t) => a + (t.rr || 0), 0) / wins.length).toFixed(2) : '—') +
+      '<br>Если hit-rate около 50% при RR≥2 — матожидание уже плюс. 80% на истории почти никогда не бывает.</div>';
+    const last = all.slice(-25).reverse();
+    document.getElementById('btList').innerHTML = last.length
+      ? last.map(t => {
+          const cls = t.result === 'TP1' ? 'g' : t.result === 'SL' ? 'r' : 'y';
+          return '<div class="trade-row"><span>' + escHtml(t.time) + ' ' + escHtml(t.pair) + '</span><span class="' +
+            (t.dir === 'LONG' ? 'g' : 'r') + '">' + t.dir + '</span><span>' + t.ck + '/6 RR' + t.rr + '</span><span class="' +
+            cls + '">' + t.result + '</span></div>';
+        }).join('')
+      : '<div class="empty">Сделок не было — фильтр слишком жёсткий на этом отрезке, либо мало свипов. Это нормально.</div>';
+    document.getElementById('btFill').style.width = '100%';
+  } catch (e) {
+    document.getElementById('btList').innerHTML = '<div class="empty">Ошибка загрузки истории. ' + escHtml(e.message || e) + '</div>';
+  }
+  document.getElementById('btProgWrap').style.display = 'none';
+  btn.disabled = false; btn.textContent = 'Запустить бэктест';
+}
+
+buildGrid();
+document.getElementById('fConf').value = String(filters.minCk || 5);
+document.getElementById('fType').value = filters.type || 'all';
+document.getElementById('fWait').value = filters.showWait === false ? '0' : '1';
+renderChats();
+renderAlerts();
+setTimeout(cMain, 80);
+</script>
+</body>
+</html>
