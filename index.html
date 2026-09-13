@@ -853,8 +853,30 @@ function analyzeFromKlines(k1h, k4h, opt) {
   if (dir === 'LONG' && sl >= entry) return pack('wait', 'SL выше входа — уровни сломаны.');
   if (dir === 'SHORT' && sl <= entry) return pack('wait', 'SL ниже входа — уровни сломаны.');
 
-  let tp1 = dir === 'LONG' ? rng.hi : rng.lo;
+  // TP1 раньше всегда брался как противоположная граница ВСЕГО 4H
+  // дилинг-рейнджа (rng.hi/rng.lo). На практике это часто цель в 4-8R —
+  // весь свинг диапазона рынка. Такую дистанцию цена проходит редко и
+  // не по прямой, а SL стоит гораздо ближе (за хвостом локального свипа),
+  // поэтому почти любая сделка сначала задевала SL, просто из-за того что
+  // "туда" объективно ближе, чем "туда". Заменяем на ближайший разумный
+  // 1H структурный уровень между входом и дальней 4H-границей (последний
+  // противоположный своп-хай/лой на 1H), а если такого нет — фолбэк на
+  // старую 4H-границу. Минимум 2R (жёсткий фильтр качества) не меняется.
   const minTpDist = Math.abs(entry - sl) * 2;
+  const farEdge = dir === 'LONG' ? rng.hi : rng.lo;
+  let nearestSwing = null;
+  if (dir === 'LONG') {
+    for (const s of sw1.highs) {
+      if (s.price > entry + minTpDist && (nearestSwing === null || s.price < nearestSwing)) nearestSwing = s.price;
+    }
+  } else {
+    for (const s of sw1.lows) {
+      if (s.price < entry - minTpDist && (nearestSwing === null || s.price > nearestSwing)) nearestSwing = s.price;
+    }
+  }
+  let tp1 = nearestSwing !== null
+    ? (dir === 'LONG' ? Math.min(nearestSwing, farEdge) : Math.max(nearestSwing, farEdge))
+    : farEdge;
   if (Math.abs(tp1 - entry) < minTpDist) {
     tp1 = dir === 'LONG' ? entry + minTpDist : entry - minTpDist;
   }
