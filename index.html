@@ -321,7 +321,7 @@ input[type=range]{width:100%;accent-color:var(--yellow);height:4px;cursor:pointe
 
   <div id="tab-backtest" class="section">
     <div class="section-title mb8">Бэктест</div>
-    <div class="note">Лимитка в середину FVG/OB. Если SL и TP1 в одной свече — считается SL. Без проскальзывания и комиссий. Таймаут 48 часов 1H. Это hit-rate к TP1, не «магическая уверенность».</div>
+    <div class="note">Лимитка в середину FVG/OB. Если SL и TP1 задеты в одной свече — порядок оценивается по движению цены внутри бара (open→close); при неочевидном направлении считается SL. Без проскальзывания и комиссий. Таймаут 48 часов 1H. Это hit-rate к TP1, не «магическая уверенность».</div>
     <div class="calc-row">
       <div class="input-group">
         <div class="input-label">Пары</div>
@@ -831,13 +831,19 @@ function analyzeFromKlines(k1h, k4h, opt) {
   const limit = +((zone.lo + zone.hi) / 2).toFixed(8);
   const entry = chasing ? limit : (cur >= zone.lo && cur <= zone.hi ? cur : limit);
 
+  // Буфер за хвостом свипа: раньше был фиксированный 0.12%, что на волатильных
+  // 1H свечах часто оказывалось теснее обычного шума после входа — SL и TP1
+  // задевались одним и тем же баром. Теперь буфер берёт больший из
+  // фиксированного 0.12% и 0.15×ATR(1H), т.е. масштабируется под реальную
+  // волатильность пары в моменте, не меняя саму логику входа/фильтров.
+  const slBuf = Math.max(0.0012, 0.15 * atr / cur);
   let sl, slSrc = 'за свипом';
   if (dir === 'LONG') {
-    sl = sweep.extreme * 0.9988;
-    if (ob) sl = Math.min(sl, ob.lo * 0.9988);
+    sl = sweep.extreme * (1 - slBuf);
+    if (ob) sl = Math.min(sl, ob.lo * (1 - slBuf));
   } else {
-    sl = sweep.extreme * 1.0012;
-    if (ob) sl = Math.max(sl, ob.hi * 1.0012);
+    sl = sweep.extreme * (1 + slBuf);
+    if (ob) sl = Math.max(sl, ob.hi * (1 + slBuf));
   }
   sl = +sl.toFixed(8);
 
@@ -1349,7 +1355,7 @@ function simulatePair(pair, k1h, k4h, onProg) {
   for (let i = minI; i < k1h.length; i++) {
     if (onProg && i % 40 === 0) onProg(i / k1h.length);
     const bar = k1h[i];
-    const H = +bar[2], L = +bar[3], C = +bar[4];
+    const O = +bar[1], H = +bar[2], L = +bar[3], C = +bar[4];
     if (open) {
       if (!open.filled) {
         if (L <= open.entry && H >= open.entry) { open.filled = true; open.fillBar = i; }
@@ -1358,7 +1364,27 @@ function simulatePair(pair, k1h, k4h, onProg) {
       }
       const hitSL = open.dir === 'LONG' ? L <= open.sl : H >= open.sl;
       const hitTP = open.dir === 'LONG' ? H >= open.tp1 : L <= open.tp1;
-      if (hitSL && hitTP) { open.result = 'SL'; open.exit = open.sl; trades.push(open); open = null; continue; }
+      if (hitSL && hitTP) {
+        // Оба уровня задеты внутри одной 1H свечи — без младшего ТФ порядок
+        // касания неизвестен напрямую, поэтому оцениваем его по тому, куда
+        // цена шла от открытия свечи: если свеча явно двигалась в сторону TP
+        // (открытие ближе к SL, закрытие ближе к TP, и большая часть хода —
+        // это направление сделки), считаем, что TP был задет первым.
+        // Если направление неочевидно (разворотная/дожи-свеча, открытие
+        // само около SL) — оставляем консервативный исход SL, как и раньше.
+        const range = (H - L) || 1e-12;
+        const openPos = (O - L) / range;   // 0 = открытие у лоу, 1 = открытие у хай
+        const closePos = (C - L) / range;  // 0 = закрытие у лоу, 1 = закрытие у хай
+        let tpFirst;
+        if (open.dir === 'LONG') {
+          // движение к TP — это движение вверх по свече
+          tpFirst = closePos > openPos && openPos >= 0.35;
+        } else {
+          tpFirst = closePos < openPos && openPos <= 0.65;
+        }
+        if (tpFirst) { open.result = 'TP1'; open.exit = open.tp1; open.ambiguous = true; trades.push(open); open = null; continue; }
+        open.result = 'SL'; open.exit = open.sl; trades.push(open); open = null; continue;
+      }
       if (hitSL) { open.result = 'SL'; open.exit = open.sl; trades.push(open); open = null; continue; }
       if (hitTP) { open.result = 'TP1'; open.exit = open.tp1; trades.push(open); open = null; continue; }
       if (i - open.fillBar >= 48) { open.result = 'TIME'; open.exit = C; trades.push(open); open = null; }
